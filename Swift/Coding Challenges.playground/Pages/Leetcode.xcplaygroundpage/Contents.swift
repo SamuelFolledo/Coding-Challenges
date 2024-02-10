@@ -11,12 +11,23 @@ public class ListNode {
 }
 
 ///Generated a node from an array where the first item is the tail
-func generateNode(_ inputs: [Int]) -> ListNode? {
-    var resultNode: ListNode?
-    for input in inputs {
-        resultNode = ListNode(input, resultNode)
+func generateNode(_ inputs: [Int], isReversed: Bool = false) -> ListNode? {
+    if isReversed {
+        var resultNode: ListNode?
+        for input in inputs {
+            resultNode = ListNode(input, resultNode)
+        }
+    } else {
+        var headNode: ListNode?
+        var resultNode: ListNode?
+        for input in inputs {
+            resultNode = ListNode(input, resultNode)
+            if headNode == nil {
+                headNode = resultNode
+            }
+        }
+        return headNode
     }
-    return resultNode
 }
 
 func printAllNodeValues(_ node: ListNode?) {
@@ -88,9 +99,10 @@ func addTwoNumbers(_ l1: ListNode?, _ l2: ListNode?) -> ListNode? {
 }
 
 func testAddTwoNumbers() {
-    printAllNodeValues(addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4])))
-    printAllNodeValues(addTwoNumbers(generateNode([0]), generateNode([0])))
-    printAllNodeValues(addTwoNumbers(generateNode([9,9,9,9,9,9,9,9]), generateNode([9,9,9,9])))
+    print("\n2: Add Two Numbers")
+    printAllNodeValues(addTwoNumbers(generateNode([2,4,3], isReversed: true), generateNode([5,6,4])))
+    printAllNodeValues(addTwoNumbers(generateNode([0], isReversed: true), generateNode([0])))
+    printAllNodeValues(addTwoNumbers(generateNode([9,9,9,9,9,9,9,9], isReversed: true), generateNode([9,9,9,9])))
 }
 
 testAddTwoNumbers()
