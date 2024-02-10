@@ -89,7 +89,6 @@ func addTwoNumbers(_ l1: ListNode?, _ l2: ListNode?) -> ListNode? {
 
 func testAddTwoNumbers() {
     printAllNodeValues(addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4])))
-    printAllNodeValues(addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4])))
     printAllNodeValues(addTwoNumbers(generateNode([0]), generateNode([0])))
     printAllNodeValues(addTwoNumbers(generateNode([9,9,9,9,9,9,9,9]), generateNode([9,9,9,9])))
 }
