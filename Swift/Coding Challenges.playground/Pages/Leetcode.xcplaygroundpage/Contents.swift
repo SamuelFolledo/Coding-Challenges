@@ -12,22 +12,12 @@ public class ListNode {
 
 ///Generated a node from an array where the first item is the tail
 func generateNode(_ inputs: [Int], isReversed: Bool = false) -> ListNode? {
-    if isReversed {
-        var resultNode: ListNode?
-        for input in inputs {
-            resultNode = ListNode(input, resultNode)
-        }
-    } else {
-        var headNode: ListNode?
-        var resultNode: ListNode?
-        for input in inputs {
-            resultNode = ListNode(input, resultNode)
-            if headNode == nil {
-                headNode = resultNode
-            }
-        }
-        return headNode
+    let inputs = isReversed ? inputs : inputs.reversed()
+    var resultNode: ListNode?
+    for input in inputs {
+        resultNode = ListNode(input, resultNode)
     }
+    return resultNode
 }
 
 func printAllNodeValues(_ node: ListNode?) {
