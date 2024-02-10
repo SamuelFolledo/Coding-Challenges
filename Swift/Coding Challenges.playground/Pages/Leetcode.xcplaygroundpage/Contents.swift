@@ -30,6 +30,8 @@ func printAllNodeValues(_ node: ListNode?) {
             //print value with a comma and no new line
             print("\(currentNode.val),", terminator: "")
         }
+    } else {
+        print([])
     }
     if let nextNode = currentNode?.next {
         printAllNodeValues(nextNode)
@@ -112,15 +114,54 @@ testAddTwoNumbers()
  - Both list1 and list2 are sorted in non-decreasing order.
  */
 
+func mergeTwoLists(_ list1: [Int], _ list2: [Int]) {
+    var sortedList = [Int]()
+    var index1 = 0
+    var index2 = 0
+    while sortedList.count < list1.count + list2.count {
+        if index1 == list1.count {
+            sortedList.append(contentsOf: Array(list2[index2..<list2.count]))
+        } else if index2 == list2.count {
+            sortedList.append(contentsOf: Array(list1[index1..<list1.count]))
+        } else {
+            let item1 = list1[index1]
+            let item2 = list2[index2]
+            if item1 < item2 {
+                sortedList.append(item1)
+                index1 += 1
+            } else {
+                sortedList.append(item2)
+                index2 += 1
+            }
+        }
+    }
+    print(sortedList)
+}
+
 func mergeTwoLists(_ list1: ListNode?, _ list2: ListNode?) -> ListNode? {
+    guard let list1 = list1 else { return list2 }
+    guard let list2 = list2 else { return list1 }
     var resultNode: ListNode?
-    
+    if list1.val < list2.val {
+        resultNode = list1
+        resultNode?.next = mergeTwoLists(list1.next, list2)
+    } else {
+        resultNode = list2
+        resultNode?.next = mergeTwoLists(list1, list2.next)
+    }
     return resultNode
 }
+
 func testMergeTwoLists() {
-    mergeTwoLists(generateNode([1,2,4]), generateNode([1,3,4])) //Output: [1,1,2,3,4,4]
-    mergeTwoLists(generateNode([]), generateNode([])) //Output: []
-    mergeTwoLists(generateNode([]), generateNode([0])) //Output: [0]
+    print("\n21: Merge Two Sorted Lists (Int)")
+    mergeTwoLists([1,4,5,9], [0,1,2,3,6,9]) //Output: [0, 1, 1, 2, 3, 4, 5, 6, 9, 9]
+    mergeTwoLists([], [])
+    mergeTwoLists([], [0])
+    print("\n21: Merge Two Sorted Lists (LinkNode)")
+    printAllNodeValues(mergeTwoLists(generateNode([1,2,4]), generateNode([1,3,4]))) //Output: [1,1,2,3,4,4]
+    printAllNodeValues(mergeTwoLists(generateNode([1,4,5,9]), generateNode([0,1,2,3,6,9]))) //Output: [0, 1, 1, 2, 3, 4, 5, 6, 9, 9]
+    printAllNodeValues(mergeTwoLists(generateNode([]), generateNode([]))) //Output: []
+    printAllNodeValues(mergeTwoLists(generateNode([]), generateNode([0]))) //Output: [0]
 }
 
 testMergeTwoLists()
