@@ -94,4 +94,17 @@ testAddTwoNumbers()
  - Both list1 and list2 are sorted in non-decreasing order.
  */
 
+func mergeTwoLists(_ list1: ListNode?, _ list2: ListNode?) -> ListNode? {
+    var resultNode: ListNode?
+    
+    return resultNode
+}
+func testMergeTwoLists() {
+    mergeTwoLists(generateNode([1,2,4]), generateNode([1,3,4])) //Output: [1,1,2,3,4,4]
+    mergeTwoLists(generateNode([]), generateNode([])) //Output: []
+    mergeTwoLists(generateNode([]), generateNode([0])) //Output: [0]
+}
+
+testMergeTwoLists()
+
 //: [Next](@next)
