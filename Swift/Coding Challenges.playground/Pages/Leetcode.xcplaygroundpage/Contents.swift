@@ -19,7 +19,7 @@ func generateNode(_ inputs: [Int]) -> ListNode? {
     return resultNode
 }
 
-func printAllNode(_ node: ListNode?, isReversed: Bool = true) {
+func printAllNodeValues(_ node: ListNode?) {
     var currentNode = node
     if let currentNode {
         let isLastItem: Bool = currentNode.next == nil
@@ -31,7 +31,7 @@ func printAllNode(_ node: ListNode?, isReversed: Bool = true) {
         }
     }
     if let nextNode = currentNode?.next {
-        printAllNode(nextNode)
+        printAllNodeValues(nextNode)
     }
 }
 
@@ -88,10 +88,10 @@ func addTwoNumbers(_ l1: ListNode?, _ l2: ListNode?) -> ListNode? {
 }
 
 func testAddTwoNumbers() {
-    printAllNode(addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4])))
-    printAllNode(addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4])))
-    printAllNode(addTwoNumbers(generateNode([0]), generateNode([0])))
-    printAllNode(addTwoNumbers(generateNode([9,9,9,9,9,9,9,9]), generateNode([9,9,9,9])))
+    printAllNodeValues(addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4])))
+    printAllNodeValues(addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4])))
+    printAllNodeValues(addTwoNumbers(generateNode([0]), generateNode([0])))
+    printAllNodeValues(addTwoNumbers(generateNode([9,9,9,9,9,9,9,9]), generateNode([9,9,9,9])))
 }
 
 testAddTwoNumbers()
