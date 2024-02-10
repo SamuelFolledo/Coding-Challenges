@@ -10,6 +10,31 @@ public class ListNode {
     public init(_ val: Int, _ next: ListNode?) { self.val = val; self.next = next; }
 }
 
+///Generated a node from an array where the first item is the tail
+func generateNode(_ inputs: [Int]) -> ListNode? {
+    var resultNode: ListNode?
+    for input in inputs {
+        resultNode = ListNode(input, resultNode)
+    }
+    return resultNode
+}
+
+func printAllNode(_ node: ListNode?, isReversed: Bool = true) {
+    var currentNode = node
+    if let currentNode {
+        let isLastItem: Bool = currentNode.next == nil
+        if isLastItem {
+            print(currentNode.val)
+        } else {
+            //print value with a comma and no new line
+            print("\(currentNode.val),", terminator: "")
+        }
+    }
+    if let nextNode = currentNode?.next {
+        printAllNode(nextNode)
+    }
+}
+
 /*:
  ## 2. [Add Two Numbers](https://leetcode.com/problems/add-two-numbers/description/)
  The pair sum of a pair (a,b) is equal to a + b. The maximum pair sum is the largest pair sum in a list of pairs.
@@ -33,15 +58,6 @@ public class ListNode {
  Output: [8,9,9,9,0,0,0,1]
  */
 
-///Generated a node from an array where the first item is the tail
-func generateNode(_ inputs: [Int]) -> ListNode? {
-    var resultNode: ListNode?
-    for input in inputs {
-        resultNode = ListNode(input, resultNode)
-    }
-    return resultNode
-}
-
 func addTwoNumbers(_ l1: ListNode?, _ l2: ListNode?) -> ListNode? {
     var node1 = l1
     var node2 = l2
@@ -62,7 +78,7 @@ func addTwoNumbers(_ l1: ListNode?, _ l2: ListNode?) -> ListNode? {
     if let num2 = NumberFormatter().number(from: numString2) {
         total += num2.intValue
     }
-    print("Add Two Numbers: \(numString1) + \(numString2) = \(total)")
+//    print("Add Two Numbers: \(numString1) + \(numString2) = \(total)")
     var totalString = String(total)
     var resultNode: ListNode?
     for (index, char) in totalString.enumerated() {
@@ -72,9 +88,10 @@ func addTwoNumbers(_ l1: ListNode?, _ l2: ListNode?) -> ListNode? {
 }
 
 func testAddTwoNumbers() {
-    addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4]))
-    addTwoNumbers(generateNode([0]), generateNode([0]))
-    addTwoNumbers(generateNode([9,9,9,9,9,9,9,9]), generateNode([9,9,9,9]))
+    printAllNode(addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4])))
+    printAllNode(addTwoNumbers(generateNode([2,4,3]), generateNode([5,6,4])))
+    printAllNode(addTwoNumbers(generateNode([0]), generateNode([0])))
+    printAllNode(addTwoNumbers(generateNode([9,9,9,9,9,9,9,9]), generateNode([9,9,9,9])))
 }
 
 testAddTwoNumbers()
