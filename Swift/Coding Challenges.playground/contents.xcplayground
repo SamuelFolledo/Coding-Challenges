@@ -3,5 +3,6 @@
     <pages>
         <page name='Leetcode'/>
         <page name='Untitled Page'/>
+        <page name='Interview Questions'/>
     </pages>
 </playground>
