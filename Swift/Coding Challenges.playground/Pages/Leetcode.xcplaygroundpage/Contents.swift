@@ -192,14 +192,36 @@ testMergeTwoLists()
  */
 
 func longestValidParentheses(_ s: String) -> Int {
-    
-    return 0
+    guard s.count >= 2 else { return 0 }
+    var result = 0
+    var counter = 0
+    var hasOpen = false
+    for i in 0..<s.count {
+        let char = Array(s)[i]
+        if hasOpen {
+            if char == ")" {
+                counter += 2
+                if counter > result {
+                    result = counter
+                }
+            } else {
+                hasOpen = true
+                counter = 0
+            }
+        }
+        hasOpen = char == "("
+    }
+    return result
 }
+
 func testLongestValidParentheses() {
     print("\n32: Longest Valid Parentheses")
+    print(longestValidParentheses("()")) //Output: 2
     print(longestValidParentheses("(()")) //Output: 2
     print(longestValidParentheses(")()())")) //Output: 4
     print(longestValidParentheses("")) //Output: 0
-    print(longestValidParentheses("(())")) //Output: 1?
+    print(longestValidParentheses("()(())")) //Output: 6
 }
+testLongestValidParentheses()
+
 //: [Next](@next)
