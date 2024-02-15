@@ -195,5 +195,11 @@ func longestValidParentheses(_ s: String) -> Int {
     
     return 0
 }
-
+func testLongestValidParentheses() {
+    print("\n32: Longest Valid Parentheses")
+    print(longestValidParentheses("(()")) //Output: 2
+    print(longestValidParentheses(")()())")) //Output: 4
+    print(longestValidParentheses("")) //Output: 0
+    print(longestValidParentheses("(())")) //Output: 1?
+}
 //: [Next](@next)
