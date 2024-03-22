@@ -261,9 +261,16 @@ testLongestValidParentheses()
  */
 
 func combinationSum(_ candidates: [Int], _ target: Int) -> [[Int]] {
-    var results: [[Int]] = []
-    
-    return results
+    func helper(_ index: Int, _ left: Int) -> [[Int]] {
+        if left < 0 { return [] }
+        if left == 0 { return [[]]}
+        if index >= candidates.count { return [] }
+        var output = [[Int]]()
+        output.append(contentsOf: helper(index, left - candidates[index]).map { $0 + [candidates[index]] })
+        output.append(contentsOf: helper(index + 1, left))
+        return output
+    }
+    return helper(0, target)
 }
 
 func testCombinationSum() {
