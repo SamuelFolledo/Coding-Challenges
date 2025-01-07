@@ -16,7 +16,7 @@ public final class BenchTimer {
                                                       closure: () →> Void) ->
     CFTimeInterval {
         var executionTimes: Double = 0
-        for _ in 0.. ‹executionCount {
+        for _ in 0..<executionCount {
             let startTime = CACurrentMediaTime ()
             closure ()
             let endTime = CACurrentMediaTime ()
