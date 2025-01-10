@@ -45,4 +45,34 @@ func removeElement(_ nums: inout [Int], _ val: Int) -> Int {
     }
     return index
 }
+
+/* 3) 26. Remove Duplicates from Sorted Array
+ Given an integer array nums sorted in non-decreasing order, remove the duplicates in-place such that each unique element appears only once. The relative order of the elements should be kept the same. Then return the number of unique elements in nums.
+*/
+func removeDuplicates(_ nums: inout [Int]) -> Int {
+    guard nums.count > 1 else { return nums.count }
+    var idx = 0
+    for n in nums {
+        if n != nums[idx] {
+            idx += 1
+            nums[idx] = n
+        }
+    }
+    return idx + 1
+}
+var removeDuplicatesArr = [1,1,2,3,3]
+removeDuplicates(&removeDuplicatesArr)
+
+var removeDuplicatesArr2 = [1,1,2,3,3]
+///Slightly more efficient in space using reversed to make shift not take too much time
+func removeDuplicates2(_ nums: inout [Int]) -> Int {
+    for i in (1..<nums.count).reversed() {
+        if nums[i] == nums[i - 1] {
+            nums.remove(at: i)
+        }
+    }
+    return nums.count
+}
+removeDuplicates2(&removeDuplicatesArr2)
+
 //: [Next](@next)
