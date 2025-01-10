@@ -125,4 +125,30 @@ func removeDuplicatesMedium(_ nums: inout [Int]) -> Int {
 }
 removeDuplicatesMedium(&removeDuplicatesMediumArr)
 
+/*
+ 5) 169. Majority Element
+ Given an array nums of size n, return the majority element.
+
+ Input: nums = [2,2,1,1,1,2,2]
+ Output: 2
+ */
+func majorityElementBrute(_ nums: [Int]) -> Int {
+    var counters: [Int: Int] = [:]
+    for num in nums {
+        if let count = counters[num] {
+            counters[num] = count + 1
+        } else {
+            counters[num] = 1
+        }
+    }
+    var max = 0
+    var maxNum: Int = nums.first!
+    for (num, count) in counters {
+        if count > max {
+            max = count
+            maxNum = num
+        }
+    }
+    return maxNum
+}
 //: [Next](@next)
