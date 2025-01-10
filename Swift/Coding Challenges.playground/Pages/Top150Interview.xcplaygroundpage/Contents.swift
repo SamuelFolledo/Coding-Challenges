@@ -75,4 +75,54 @@ func removeDuplicates2(_ nums: inout [Int]) -> Int {
 }
 removeDuplicates2(&removeDuplicatesArr2)
 
+/* 4) 80. Remove Duplicates from Sorted Array II
+ Given an integer array nums sorted in non-decreasing order, remove some duplicates in-place such that each unique element appears at most twice. The relative order of the elements should be kept the same.
+ Input: nums = [0,0,1,1,1,1,2,3,3]
+ Output: 7, nums = [0,0,1,1,2,3,3,_,_]
+ */
+var removeDuplicatesMediumBruteArr = [1,1,1,2,2,3]
+///Brute force solution
+func removeDuplicatesMediumBrute(_ nums: inout [Int]) -> Int {
+    var counters: [Int: Int] = [:]
+    var index = 0
+    for n in nums {
+        if let counter = counters[n] {
+            if counter >= 2 {
+                nums.remove(at: index)
+            } else {
+                counters[n]? += 1
+                index += 1
+            }
+        } else {
+            counters[n] = 1
+            index += 1
+        }
+    }
+    return nums.count
+}
+removeDuplicatesMediumBrute(&removeDuplicatesMediumBruteArr)
+
+var removeDuplicatesMediumArr = [1,1,1,2,2,3]
+func removeDuplicatesMedium(_ nums: inout [Int]) -> Int {
+    let n = nums.count
+    guard n > 2 else { return n }
+    var j = 1
+    var count = 1
+
+    for i in 1..<nums.count {
+        if nums[i] == nums[i - 1] {
+            count += 1
+        } else {
+            count = 1
+        }
+
+        if count <= 2 {
+            nums[j] = nums[i]
+            j += 1
+        }
+    }
+    return j
+}
+removeDuplicatesMedium(&removeDuplicatesMediumArr)
+
 //: [Next](@next)
