@@ -151,4 +151,22 @@ func majorityElementBrute(_ nums: [Int]) -> Int {
     }
     return maxNum
 }
+
+//O(n)
+func majorityElement(_ nums: [Int]) -> Int {
+    var candidate: Int = Int.min
+    var ticker: Int = 0
+    for number in nums {
+        if (ticker == 0) {
+            candidate = number
+        }
+
+        if (number == candidate) {
+            ticker += 1
+        } else {
+            ticker -= 1
+        }
+    }
+    return candidate
+}
 //: [Next](@next)
