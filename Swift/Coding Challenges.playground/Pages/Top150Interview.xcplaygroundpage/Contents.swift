@@ -231,5 +231,20 @@ func maxProfitBrute(_ prices: [Int]) -> Int {
     return maxProfit
 }
 
-
+//sliding window solution
+func maxProfit(_ prices: [Int]) -> Int {
+    var maxProfit = 0
+    var left = 0
+    var right = 0
+    while right < prices.count {
+        if prices[left] < prices[right] {
+            let profit = prices[right] - prices[left]
+            maxProfit = max(maxProfit, profit)
+        } else {
+            left = right
+        }
+        right += 1
+    }
+    return maxProfit
+}
 //: [Next](@next)
