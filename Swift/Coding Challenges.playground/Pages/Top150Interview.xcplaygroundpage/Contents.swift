@@ -202,4 +202,34 @@ func rotate(_ nums: inout [Int], _ k: Int) {
 var rotateArr = [1,2,3,4,5,6,7]
 rotate(&rotateArr, 3)
 
+/*
+ 7) 121. Best Time to Buy and Sell Stock
+ You are given an array prices where prices[i] is the price of a given stock on the ith day.
+ You want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.
+ Return the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return 0.
+
+ Example 1:
+ Input: prices = [7,1,5,3,6,4]
+ Output: 5
+
+ Example 2:
+ Input: prices = [7,6,4,3,1]
+ Output: 0
+ */
+
+func maxProfitBrute(_ prices: [Int]) -> Int {
+    //TODO: Figure out why it's taking too long on large prices
+    var maxProfit = 0
+    for i in 0..<prices.count {
+        for j in (i + 1)..<prices.count {
+            let profit = prices[j] - prices[i]
+            if profit > maxProfit {
+                maxProfit = profit
+            }
+        }
+    }
+    return maxProfit
+}
+
+
 //: [Next](@next)
