@@ -324,18 +324,14 @@ func canJump(_ nums: [Int]) -> Bool {
 /*
  25) 125. Valid Palindrome
  A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Alphanumeric characters include letters and numbers.
-
  Given a string s, return true if it is a palindrome, or false otherwise.
 
-
-
  Example 1:
-
  Input: s = "A man, a plan, a canal: Panama"
  Output: true
  Explanation: "amanaplanacanalpanama" is a palindrome.
- Example 2:
 
+ Example 2:
  Input: s = "race a car"
  Output: false
  Explanation: "raceacar" is not a palindrome.
@@ -354,4 +350,30 @@ func isPalindrome(_ s: String) -> Bool {
     return true
 }
 
+/*
+ 26) 392. Is Subsequence
+ Given two strings s and t, return true if s is a subsequence of t, or false otherwise.
+ A subsequence of a string is a new string that is formed from the original string by deleting some (can be none) of the characters without disturbing the relative positions of the remaining characters. (i.e., "ace" is a subsequence of "abcde" while "aec" is not).
+
+ Example 1:
+ Input: s = "abc", t = "ahbgdc"
+ Output: true
+
+ Example 2:
+ Input: s = "axc", t = "ahbgdc"
+ Output: false
+ */
+func isSubsequenceBrute(_ s: String, _ t: String) -> Bool {
+    guard !s.isEmpty else { return true }
+    var index = 0
+    for char in t {
+        if Array(s)[index] == char {
+            index += 1
+            if index == s.count {
+                return true
+            }
+        }
+    }
+    return false
+}
 //: [Next](@next)
