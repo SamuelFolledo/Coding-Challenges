@@ -249,7 +249,7 @@ func maxProfit(_ prices: [Int]) -> Int {
 }
 
 /*
- 122. Best Time to Buy and Sell Stock II
+ 8) 122. Best Time to Buy and Sell Stock II
  You are given an integer array prices where prices[i] is the price of a given stock on the ith day.
  On each day, you may decide to buy and/or sell the stock. You can only hold at most one share of the stock at any time. However, you can buy it then immediately sell it on the same day.
  Find and return the maximum profit you can achieve.
@@ -276,6 +276,48 @@ func maxProfit2(_ prices: [Int]) -> Int {
         maxProfit += price - previousPrice
     }
     return maxProfit
+}
+
+/*
+ 9) 55. Jump Game
+ You are given an integer array nums. You are initially positioned at the array's first index, and each element in the array represents your maximum jump length at that position.
+ Return true if you can reach the last index, or false otherwise.
+
+ Example 1:
+
+ Input: nums = [2,3,1,1,4]
+ Output: true
+ Explanation: Jump 1 step from index 0 to 1, then 3 steps to the last index.
+ Example 2:
+
+ Input: nums = [3,2,1,0,4]
+ Output: false
+ Explanation: You will always arrive at index 3 no matter what. Its maximum jump length is 0, which makes it impossible to reach the last index.
+ */
+
+//func canJump(_ nums: [Int]) -> Bool {
+//    guard nums.count > 1 else { return true }
+//    var i = 0
+//    while i < nums.count {
+//        i += nums[i]
+//        if i >= nums.count - 1 {
+//            return true
+//        } else if nums[i] == 0 {
+//            return false
+//        }
+//    }
+//    return false
+//}
+
+func canJump(_ nums: [Int]) -> Bool {
+    var reach = 0
+    for (index, num) in nums.enumerated() {
+        if index > reach {
+            return false
+        }
+        reach = max(reach, index + num)
+    }
+    return true
 }
 
 //: [Next](@next)
