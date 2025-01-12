@@ -411,10 +411,26 @@ func twoSum2Brute(_ numbers: [Int], _ target: Int) -> [Int] {
     var dic: [Int: Int] = [:]
     for (index, num) in numbers.enumerated() {
         if let firstIndex = dic[num] {
-            return [firstIndex, index + 1]
+            return [firstIndex + 1, index + 1]
         } else {
             let difference = target - num
-            dic[difference] = index + 1
+            dic[difference] = index
+        }
+    }
+    return []
+}
+
+func twoSum2(_ numbers: [Int], _ target: Int) -> [Int] {
+    var low = 0
+    var high = numbers.count - 1
+    while low < high {
+        var sum = numbers[low] + numbers[high]
+        if sum == target {
+            return [low + 1, high + 1]
+        } else if sum < target {
+            low += 1
+        } else {
+            high -= 1
         }
     }
     return []
