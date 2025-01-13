@@ -619,8 +619,10 @@ func isValidSudokuBrute(_ board: [[Character]]) -> Bool {
     //iterate through each 3x3
     for k in 0 ..< 9 {
         var set = Set<Character>()
-        for i in k / 3 * 3 ..< k / 3 * 3 + 3 {
-            for j in k % 3 * 3 ..< k % 3 * 3 + 3 {
+        let row = k / 3 * 3 //starting row for each sub-box
+        for i in row ..< row + 3 {
+            let column = k % 3 * 3 //starting column for each sub-box
+            for j in column ..< column + 3 {
                 if board[i][j] != ".", set.contains(board[i][j]) {
                     return false
                 }
@@ -643,7 +645,7 @@ func isValidSudoku(_ board: [[Character]]) -> Bool {
 
     for i in 0..<9 {
         if isInvalid(board[i]) { return false }
-        if isInvalid(board.map({ $0[i] })) { return false }
+        if isInvalid(board.map({ $0[i] })) { return false } ///creates an array of characters from the i-th column of the board
         let col = (i % 3) * 3
         let row = (i / 3) * 3
         let box = Array(board[row][col..<col + 3]) + Array(board[row + 1][col..<col + 3]) + Array(board[row + 2][col..<col + 3])
