@@ -937,6 +937,78 @@ invertTree(tree)
 tree?.printBFS()
 
 //MARK: - Binary Tree BFS
+/*
+ 102. Binary Tree Level Order Traversal = Medium
+ Given the root of a binary tree, return the level order traversal of its nodes' values. (i.e., from left to right, level by level).
+
+ Example 1:
+ Input: root = [3,9,20,null,null,15,7]
+ Output: [[3],[9,20],[15,7]]
+
+ Example 2:
+ Input: root = [1]
+ Output: [[1]]
+
+ Example 3:
+ Input: root = []
+ Output: []
+ */
+
+func levelOrderBrute(_ root: TreeNode?) -> [[Int]] {
+    guard let node = root else { return [] }
+    var output: [[Int]] = []
+    var queue: [TreeNode] = [node]
+
+    while !queue.isEmpty {
+        var nodesInCurrentlevel: [Int] = []
+
+        for treeNode in queue {
+            queue.removeFirst()
+            if let left = treeNode.left { queue.append(left) }
+            if let right = treeNode.right { queue.append(right) }
+            nodesInCurrentlevel.append(treeNode.val)
+        }
+
+        output.append(nodesInCurrentlevel)
+    }
+
+    return output
+}
+
+func levelOrder(_ root: TreeNode?) -> [[Int]] {
+    var res: [[Int]] = []
+    var queue: [TreeNode?] = root != nil ? [root] : []
+    var parentСount = root != nil ? 1 : 0
+    var childСount = 0
+    var array: [Int] = []
+    var index = 0
+
+    while parentСount > 0 {
+        if let node = queue[index] {
+            if node.left != nil {
+                queue.append(node.left)
+                childСount += 1
+            }
+
+            if node.right != nil {
+                queue.append(node.right)
+                childСount += 1
+            }
+
+            array.append(node.val)
+            if array.count == parentСount {
+                res.append(array)
+                array = []
+                parentСount = childСount
+                childСount = 0
+            }
+
+            index += 1
+        }
+    }
+
+    return res
+}
 
 //MARK: - Binary Search Tree
 
