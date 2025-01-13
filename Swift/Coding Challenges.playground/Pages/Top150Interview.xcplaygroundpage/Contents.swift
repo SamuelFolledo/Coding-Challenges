@@ -832,6 +832,49 @@ public class TreeNode {
         self.left = left
         self.right = right
     }
+
+    ///Initialize TreeNode using an array instead where root is the first item in the array
+    public init?(_ array: [Int]) {
+        guard !array.isEmpty else { return nil }
+        self.val = array[0]
+        self.left = nil
+        self.right = nil
+        var queue = [self]
+        var i = 1
+        while i < array.count {
+            let node = queue.removeFirst()
+            if i < array.count {
+                node.left = TreeNode(array[i])
+                queue.append(node.left!)
+                i += 1
+            }
+            if i < array.count {
+                node.right = TreeNode(array[i])
+                queue.append(node.right!)
+                i += 1
+            }
+        }
+    }
+
+    // BFS Print
+    public func printBFS() {
+        var queue = [self]
+        var result = [Int]()
+
+        while !queue.isEmpty {
+            let node = queue.removeFirst()
+            result.append(node.val)
+
+            if let left = node.left {
+                queue.append(left)
+            }
+            if let right = node.right {
+                queue.append(right)
+            }
+        }
+
+        print("BFS: \(result)")
+    }
 }
 
 /*
@@ -879,13 +922,19 @@ func maxDepth(_ root: TreeNode?) -> Int {
  */
 
 func invertTree(_ root: TreeNode?) -> TreeNode? {
+    print("+Inverting \(root?.val.description ?? "nil") \twith\t \(root?.left?.val.description ?? "noLeft")-\(root?.right?.val.description ?? "noRight")")
     guard let root = root else {return nil}
     let left = invertTree(root.left)
     let right = invertTree(root.right)
     root.left = right
     root.right = left
+    print("-Returning root \(root.val)")
     return root
 }
+
+let tree = TreeNode([4,2,7,1,3,6,9])
+invertTree(tree)
+tree?.printBFS()
 
 //MARK: - Binary Tree BFS
 
