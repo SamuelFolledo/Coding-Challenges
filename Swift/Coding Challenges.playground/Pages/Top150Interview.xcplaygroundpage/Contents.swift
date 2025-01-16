@@ -818,7 +818,38 @@ class MinStack {
 }
 
 //MARK: - Linked List
+public class ListNode {
+    public var val: Int
+    public var next: ListNode?
+    public init() { self.val = 0; self.next = nil; }
+    public init(_ val: Int) { self.val = val; self.next = nil; }
+    public init(_ val: Int, _ next: ListNode?) { self.val = val; self.next = next; }
+}
 
+/*
+ 203. Remove Linked List Elements = Easy
+ Given the head of a linked list and an integer val, remove all the nodes of the linked list that has Node.val == val, and return the new head.
+
+ Example 1:
+ Input: head = [1,2,6,3,4,5,6], val = 6
+ Output: [1,2,3,4,5]
+ */
+
+func removeElements(_ head: ListNode?, _ val: Int) -> ListNode? {
+    let dummy = ListNode(0)
+    dummy.next = head
+    var current: ListNode? = dummy
+
+    while let nextNode = current?.next {
+        if nextNode.val == val {
+            current?.next = nextNode.next
+        } else {
+            current = nextNode
+        }
+    }
+
+    return dummy.next
+}
 //MARK: - Binary Tree General
 public class TreeNode {
     public var val: Int
