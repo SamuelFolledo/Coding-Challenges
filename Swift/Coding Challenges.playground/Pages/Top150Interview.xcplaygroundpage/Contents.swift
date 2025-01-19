@@ -1043,6 +1043,61 @@ func levelOrder(_ root: TreeNode?) -> [[Int]] {
 
 //MARK: - Binary Search Tree
 
+/*
+ 4. Median of Two Sorted Arrays = Hard
+ Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays.
+ The overall run time complexity should be O(log (m+n)).
+
+ Example 1:
+ Input: nums1 = [1,3], nums2 = [2]
+ Output: 2.0
+ Explanation: merged array = [1,2,3] and median is 2.
+
+ Example 2:
+ Input: nums1 = [1,2], nums2 = [3,4]
+ Output: 2.5
+ Explanation: merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5.
+ */
+
+func findMedianSortedArrays(_ nums1: [Int], _ nums2: [Int]) -> Double {
+    let totalLength = nums1.count + nums2.count
+    var maxIndex = Int(ceil(Double(totalLength)/2.0))
+    if (totalLength % 2 == 0) {
+        maxIndex += 1
+    }
+    var previousTwo = 0
+    var previous = 0
+    var count = 0
+    var iNums1 = 0
+    var iNums2 = 0
+
+    while (count < maxIndex) {
+        previousTwo = previous
+        if (iNums1 < nums1.count && iNums2 < nums2.count) {
+            if (nums1[iNums1] < nums2[iNums2]) {
+                previous = nums1[iNums1]
+                iNums1 += 1
+            } else {
+                previous = nums2[iNums2]
+                iNums2 += 1
+            }
+        } else if (iNums1 < nums1.count) {
+            previous = nums1[iNums1]
+            iNums1 += 1
+        } else if (iNums2 < nums2.count) {
+            previous = nums2[iNums2]
+            iNums2 += 1
+        }
+        count += 1
+    }
+
+    if (totalLength % 2 == 0) {
+        return Double(previous + previousTwo) / 2.0
+    } else {
+        return Double(previous)
+    }
+}
+
 //MARK: - Graph General
 
 //MARK: - Graph BFS
@@ -1067,6 +1122,7 @@ func levelOrder(_ root: TreeNode?) -> [[Int]] {
 
 //MARK: - Multidimensional DP
 
+//Integer
 
 
 //: [Next](@next)
