@@ -74,6 +74,44 @@ let grid2 = [
 //print("Number of island for grid1 = \(getNumberOfIslands(grid))")
 //print("Number of island for grid2 = \(getNumberOfIslands(grid2))")
 
+/*
+ MARK: - 73. Set Matrix Zeroes = Medium
+ Given an m x n integer matrix matrix, if an element is 0, set its entire row and column to 0's.
+ You must do it in place.
+
+ Example 1:
+ Input: matrix = [[1,1,1],[1,0,1],[1,1,1]]
+ Output: [[1,0,1],[0,0,0],[1,0,1]]
+
+ Example 2:
+ Input: matrix = [[0,1,2,0],[3,4,5,2],[1,3,1,5]]
+ Output: [[0,0,0,0],[0,4,5,0],[0,3,1,0]]
+ */
+
+func setZeroes(_ matrix: inout [[Int]]) {
+    var rows = Set<Int>()
+    var columns = Set<Int>()
+    ///Find the row and index of 0s
+    for x in 0..<matrix.count {
+        for y in 0..<matrix[x].count {
+            if matrix[x][y] == 0 {
+                rows.insert(x)
+                columns.insert(y)
+            }
+        }
+    }
+    ///Update the rows and columns to 0s
+    for x in 0..<matrix.count {
+        for y in 0..<matrix[x].count {
+            if rows.contains(x) || columns.contains(y) {
+                matrix[x][y] = 0
+            }
+        }
+    }
+}
+
+//MARK: - Vehicle
+
 class Vehicle {
     var wheels: Int
     var name: String
