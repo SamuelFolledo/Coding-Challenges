@@ -77,6 +77,30 @@ func increasingBST_Recursion(_ root: TreeNode?) -> TreeNode? {
 }
 
 /*
+ 100. Same Tree = Easy
+ Given the roots of two binary trees p and q, write a function to check if they are the same or not.
+
+ Two binary trees are considered the same if they are structurally identical, and the nodes have the same value.
+
+ Example 1:
+ Input: p = [1,2,3], q = [1,2,3]
+ Output: true
+
+ Example 2:
+ Input: p = [1,2], q = [1,null,2]
+ Output: false
+
+ Example 3:
+ Input: p = [1,2,1], q = [1,1,2]
+ Output: false
+ */
+func isSameTree(_ p: TreeNode?, _ q: TreeNode?) -> Bool {
+    guard p != nil || q != nil else { return true }
+    guard let p = p, let q = q else { return false }
+    return p.val == q.val && isSameTree(p.left, q.left) && isSameTree(p.right, q.right)
+}
+
+/*
  You are given an array of events where events[i] = [startDayi, endDayi]. Every event i starts at startDayi and ends at endDayi.
 
  You can attend an event i at any day d where startTimei <= d <= endTimei. You can only attend one event at any time d.
