@@ -101,6 +101,28 @@ func isSameTree(_ p: TreeNode?, _ q: TreeNode?) -> Bool {
 }
 
 /*
+ 101. Symmetric Tree = Easy
+ Given the root of a binary tree, check whether it is a mirror of itself (i.e., symmetric around its center).
+
+ Example 1:
+ Input: root = [1,2,2,3,4,4,3]
+ Output: true
+
+ Example 2:
+ Input: root = [1,2,2,null,3,null,3]
+ Output: false
+ */
+func isSymmetric(_ root: TreeNode?) -> Bool {
+    isMirror(root, root)
+}
+
+private func isMirror(_ left: TreeNode?, _ right: TreeNode?) -> Bool {
+    if left == nil, right == nil { return true }
+    guard left?.val == right?.val else { return false }
+    return isMirror(left?.left, right?.right) && isMirror(left?.right, right?.left)
+}
+
+/*
  You are given an array of events where events[i] = [startDayi, endDayi]. Every event i starts at startDayi and ends at endDayi.
 
  You can attend an event i at any day d where startTimei <= d <= endTimei. You can only attend one event at any time d.
@@ -341,4 +363,5 @@ func findMissingRanges(_ nums: [Int], _ lower: Int, _ upper: Int) -> [[Int]] {
     if nums.last != upper { result.append([(nums.last ?? 0) + 1, upper])}
     return result
 }
+
 //: [Next](@next)
