@@ -364,4 +364,27 @@ func findMissingRanges(_ nums: [Int], _ lower: Int, _ upper: Int) -> [[Int]] {
     return result
 }
 
+/*
+ 14. Longest Common Prefix = Easy
+ Write a function to find the longest common prefix string amongst an array of strings.
+ If there is no common prefix, return an empty string "".
+
+ Example 1:
+ Input: strs = ["flower","flow","flight"]
+ Output: "fl"
+
+ Example 2:
+ Input: strs = ["dog","racecar","car"]
+ Output: ""
+ */
+func longestCommonPrefix(_ strs: [String]) -> String {
+    guard !strs.isEmpty else { return "" }
+    var prefix = strs[0]
+    for word in strs {
+        while !word.hasPrefix(prefix) {
+            prefix = String(prefix.dropLast())
+        }
+    }
+    return prefix
+}
 //: [Next](@next)
