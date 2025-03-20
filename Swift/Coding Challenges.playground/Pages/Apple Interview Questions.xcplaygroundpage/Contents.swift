@@ -149,4 +149,33 @@ objectB.function_P()
 objectA.function_Y()
 objectB.function_Q()
 
+/*
+ //Meta's medium question about pattern matching
+ pattern: “i18n”, input: “internationalization” returns True
+ pattern: “F2eb2k”, input: “Facebook” returns True
+ */
+func isMatching(_ pattern: String, _ input: String) -> Bool {
+    var patternIndex = 0
+    var inputIndex = 0
+    let input = Array(input)
+    while inputIndex < input.count {
+        let inputChar = String(input[inputIndex]).lowercased()
+        if patternIndex < pattern.count {
+            let patternChar = String(Array(pattern)[patternIndex]).lowercased()
+            if let number = Unicode.Scalar(patternChar),
+               CharacterSet.decimalDigits.contains(number) {
+                patternIndex += 1
+            } else if inputChar == patternChar {
+                patternIndex += 1
+            }
+        }
+        inputIndex += 1
+    }
+
+    return patternIndex == pattern.count
+}
+
+print(isMatching("F2eb2k", "Facebook")) // Now returns true
+print(isMatching("i18n", "Facebook"))
+
 //: [Next](@next)
