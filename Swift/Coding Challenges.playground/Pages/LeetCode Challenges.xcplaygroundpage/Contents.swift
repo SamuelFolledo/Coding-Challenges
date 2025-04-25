@@ -426,4 +426,93 @@ func reverseVowels(_ s: String) -> String {
     }
     return String(s)
 }
+
+/*
+ 408. Valid Word Abbreviation = Easy
+ A string can be abbreviated by replacing any number of non-adjacent, non-empty substrings with their lengths. The lengths should not have leading zeros.
+ For example, a string such as "substitution" could be abbreviated as (but not limited to):
+
+ "s10n" ("s ubstitutio n")
+ "sub4u4" ("sub stit u tion")
+ "12" ("substitution")
+ "su3i1u2on" ("su bst i t u ti on")
+ "substitution" (no substrings replaced)
+ The following are not valid abbreviations:
+
+ "s55n" ("s ubsti tutio n", the replaced substrings are adjacent)
+ "s010n" (has leading zeros)
+ "s0ubstitution" (replaces an empty substring)
+
+ Given a string word and an abbreviation abbr, return whether the string matches the given abbreviation.
+ A substring is a contiguous non-empty sequence of characters within a string.
+ */
+
+func validWordAbbreviation(_ word: String, _ abbr: String) -> Bool {
+    var i = 0, j = 0
+    let word = Array(word)
+    let abbr = Array(abbr)
+    while i < word.count && j < abbr.count {
+        if let val = abbr[j].wholeNumberValue {
+            guard val != 0 else { return false } //number cannot start with 0
+            var num = 0
+            while j < abbr.count, let digit = abbr[j].wholeNumberValue {
+                num = num * 10 + digit
+                j += 1
+            }
+            i += num //move i to num indicies
+        } else {
+            guard word[i] == abbr[j] else { return false }
+            i += 1
+            j += 1
+        }
+    }
+    return i == word.count && j == abbr.count
+}
+
+/*
+ Easy Challenges
+ Reverse a String: Write a function to reverse a given string.
+
+ Find Maximum in Array: Given an array of integers, find the maximum element.
+
+ Check if a String is Palindrome: Determine if a given string is a palindrome.
+
+ Sum of Array Elements: Calculate the sum of all elements in an array.
+
+ Check if a Number is Prime: Write a function to check if a number is prime.
+
+ Medium Challenges
+ Find Duplicate in Array: Given an array of integers from 1 to n, where each integer appears once except for one that appears twice, find the duplicate number.
+
+ Reverse Linked List: Write a function to reverse a singly linked list.
+
+ Maximum Subarray: Find the maximum contiguous subarray of an array.
+
+ First Non-Repeating Character: Given a string, find the first non-repeating character.
+
+ Binary Search: Implement binary search to find an element in a sorted array.
+
+ More Medium Challenges
+ Validate Palindrome with Two Pointers: Given a string, determine if it is a palindrome using two pointers.
+
+ Merge Two Sorted Lists: Merge two sorted linked lists into one sorted linked list.
+
+ Find Missing Number: Given an array of integers from 1 to n, where one number is missing, find the missing number.
+
+ Rotate Array: Rotate an array by a given number of positions.
+
+ Minimum Window Substring: Find the minimum window substring that contains all characters of another string.
+
+ Additional Medium Challenges
+ Top K Frequent Elements: Given an array of integers, find the top k frequent elements.
+
+ Validate IP Address: Write a function to validate whether a given string is a valid IP address.
+
+ Find All Anagrams: Given a string and a pattern, find all anagrams of the pattern in the string.
+
+ Longest Common Prefix: Find the longest common prefix among all strings in an array.
+
+ Subarray with Given Sum: Given an array and a target sum, find if there exists a subarray with the given sum.
+ */
+
 //: [Next](@next)
