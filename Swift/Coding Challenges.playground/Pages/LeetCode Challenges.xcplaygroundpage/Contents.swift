@@ -484,6 +484,16 @@ func validWordAbbreviation(_ word: String, _ abbr: String) -> Bool {
  Output: 0
  */
 
+func numJewelsInStones(_ jewels: String, _ stones: String) -> Int {
+    var jewelCounter = 0
+    for stone in stones {
+        if jewels.contains(stone) {
+            jewelCounter += 1
+        }
+    }
+    return jewelCounter
+}
+
 /*
  Easy Challenges
  Reverse a String: Write a function to reverse a given string.
