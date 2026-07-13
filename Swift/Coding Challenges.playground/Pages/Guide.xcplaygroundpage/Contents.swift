@@ -17,11 +17,20 @@ class TreeNode {
 }
 
 /*:
+ <a id="top"></a>
  # Data Structure & Algorithm Guide
  A practical reference: signals, use cases, best approach rationale, alternatives, and examples.
 
+ ## Contents
+ - [Part 1: Signal → Structure Quick Reference](#part1)
+ - [Part 2: Data Structures](#part2) — Array · Linked List · Stack · Queue · Hash Map · Heap · Trie · Graph · Union-Find
+ - [Part 3: Algorithm Patterns](#part3) — Two Pointers · Sliding Window · Binary Search · BFS · DFS · DP · Greedy · Topo Sort · Prefix Sum · Fast & Slow
+ - [Part 4: Sorting Algorithms](#part4)
+ - [Interview Tips](#tips)
+
  ---
 
+ <a id="part1"></a>
  ## Part 1: Signal → Structure Quick Reference
 
  - **"Find if X exists", "count occurrences", "duplicates"** → Hash Map / Hash Set
@@ -44,6 +53,11 @@ class TreeNode {
 
  ---
 
+ [↑ Back to Top](#top)
+
+ ---
+
+ <a id="part2"></a>
  ## Part 2: Data Structures
 
  ---
@@ -482,6 +496,11 @@ print(countComponents(5, [[0,1],[1,2],[2,3],[3,4]]))  // 1
 /*:
  ---
 
+ [↑ Back to Top](#top)
+
+ ---
+
+ <a id="part3"></a>
  ## Part 3: Algorithm Patterns
 
  ---
@@ -939,6 +958,11 @@ print(findDuplicate([3,1,3,4,2]))  // 3
 /*:
  ---
 
+ [↑ Back to Top](#top)
+
+ ---
+
+ <a id="part4"></a>
  ## Part 4: Sorting Algorithms
 
  ### Quick Sort
@@ -968,6 +992,7 @@ print(findDuplicate([3,1,3,4,2]))  // 3
 
  ---
 
+ <a id="tips"></a>
  ## How to use this in an interview
 
  1. Restate the problem and constraints out loud.
@@ -977,6 +1002,10 @@ print(findDuplicate([3,1,3,4,2]))  // 3
  5. Code it, then verify your solution matches the complexity you promised.
 
  This sequence alone — even before you write a line of code — signals strong CS fundamentals.
+
+ ---
+
+ [↑ Back to Top](#top)
 */
 
 //: [Next](@next)
