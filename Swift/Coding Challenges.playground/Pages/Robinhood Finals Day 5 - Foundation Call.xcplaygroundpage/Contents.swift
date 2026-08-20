@@ -5,52 +5,56 @@ import Foundation
 /*:
  # Robinhood Finals — Day 5: Foundation Call — Project Deep-Dive
 
- ## TODO — confirm or correct before you rely on this
+ ## TODO — updated 2026-08-13 with your real specifics
 
- Everything in Part 3-5 below is a **plausible, invented telling** of the PayPal Make-A-Payment
- story — filled in to give you a concrete draft to react to and adjust, not a transcript of what
- actually happened. Read it, then tell me what's wrong so I can update it to what's real. Specific
- things to check:
+ The previous version of this page told an invented "Autopay reuses Make-A-Payment's screen" story —
+ that was a placeholder draft, never real, and it's now fully replaced below with the actual
+ Make-A-Payment flow you described. If Day 0 or Day 8 still reference the old Autopay framing
+ (per memory, they cross-referenced it), flag it and I'll fix those too — out of scope for this pass
+ since you only asked about Day 5.
 
- 1. Team size/composition — guessed 4 iOS engineers + 1 backend engineer + 1 PM + 1 designer (~7
-    total). Adjust to the real number.
- 2. Duration — guessed ~3.5 months, tied to a Q-end launch deadline. Adjust.
- 3. Your specific ownership — guessed you designed the shared-view architecture *and* built it
-    yourself. If a teammate owned part of this, say which part.
- 4. Tech stack — guessed SwiftUI (mid-migration off UIKit), a TCA/MVI-style architecture (Combine +
-    a use-case layer), GraphQL via a client like Apollo. Adjust to what PayPal actually used.
- 5. The specific navigation complexity — guessed: different funding-source rules per flow (PayPal
-    balance allowed for one-time, not for Autopay), different step counts (one-time is 3 steps,
-    Autopay is a multi-step wizard with draft-state restoration if the app backgrounds mid-setup).
-    Adjust to the real technical wrinkle if different.
- 6. The rejected approach — guessed the team first considered duplicating the view, then a
-    boolean `isAutopay` flag baked into it, both rejected in review. Adjust if the real story differs.
- 7. The final approach — guessed a `PaymentFlowContext` protocol injected into the shared
-    view/reducer, with a separate `FlowCopyProvider` for flow-specific copy after a disagreement
-    about where that boundary should live. Adjust.
- 8. The metric — guessed: reused-view Autopay setup completion rate improved, navigation-bug reports
-    dropped versus the prior UIKit-based Autopay screen, and the shared component saved rework on a
-    later design-system update. Replace with a real number/outcome if you have one, even
-    approximate.
- 9. The hardest bug — invented a missed-case bug where changing funding source mid-review didn't
-    re-trigger fee recalculation. Replace with a real bug if you remember one, even roughly.
- 10. Backup story — guessed FuFight (your own app) and a client-authoritative-vs-server-authoritative
-     disagreement over real-time match state. Confirm or swap for a different second project.
- 11. Day 0's "tell me about a mistake" answer invents a separate incident — a funding-source
-     currency-mismatch validation bug caught via monitoring, fixed with a hotfix plus a new
-     combinatorial test matrix. Confirm/replace that one too; it's tracked here since it's the same
-     kind of invented specific.
+ What's now confirmed and baked into Part 3-6 below: the four screens and what each does, the
+ GraphQL query/mutation split between you and your mentor, the Jan-March (+ April bug-fix tail) this
+ year timeline, that you didn't design the MVI/TCA-lifecycle architecture or navigation pattern, the
+ "one of two most complex flows at the time" framing, the UIKit→SwiftUI transition + flaky CI context,
+ and the QA/friends-and-family/production bug result.
 
- Once you've corrected these, let me know and I'll update this page (and Day 0's matching answer) to
- match reality.
+ Still open — check these before you rely on Part 4's follow-up answers especially:
+ 1. **Full team size.** Confirmed: you + your mentor as the iOS engineers, plus a product-team POC
+    for UI/wireframe questions. Unconfirmed: backend engineer count, PM, designer, or other iOS
+    engineers not hands-on with this specific feature. If asked "team size," you need a real number.
+ 2. **Why PayPal balance isn't valid for a future-dated payment.** I haven't invented a reason in the
+    text below — if you don't have a crisp one-liner (e.g. "balance has to be verified at time of
+    payment, not guaranteed days out"), that's worth having ready since it's the crux of nuance 1.
+ 3. **The actual mechanism for the conditional push/pop logic** — what did you call the thing that
+    decides "push ChooseWayToPay again" vs "pop back to PaymentReview"? Described generically below
+    (a navigation/effect layer reacting to reducer state) without a made-up type name — fill in the
+    real term if you want to sound precise under a follow-up.
+ 4. **Nuance 2, debit + future date, re-paraphrased below** — the description was "change payment
+    method to PayPal balance in screen 2, then screen 2 gets pushed again to select a backup, then
+    pops back to screen 3." That reads as: debit isn't valid for a future date either, so the flow
+    routes it through the PayPal-balance case (which itself isn't valid for a future date), causing a
+    second push before landing back on review. Confirm that's right, and if there's a reason debit
+    specifically routes through PayPal-balance rather than straight to a bank/backup picker, that
+    detail would make your answer land better.
+ 5. **A specific hardest bug**, if you have one — left as an open prompt in Part 4 rather than
+    invented, since the last draft's invented bug was flagged as wrong.
+ 6. **Launch deadline pressure** — was there a hard date (marketing push, quarter-end), or did this
+    ship on a normal cadence? Not mentioned in what you gave me.
+ 7. **A disagreement/pushback moment** — not part of what you described. If the interviewer asks "tell
+    me about a time you disagreed with a teammate," you'll want a real one ready; Part 4 currently
+    flags this as missing rather than guessing one.
+
+ Part 5 (FuFight backup story) is untouched from before and still carries its own earlier TODO.
 
  ## Contents
  - Part 0: Why this story is a strong match for this specific req
  - Part 1: What's actually graded
  - Part 2: The framework
- - Part 3: Your story — PayPal Make-A-Payment (draft telling — verify against TODOs above)
+ - Part 3: Your story — PayPal Make-A-Payment
  - Part 4: Anticipated follow-up questions + example answers
- - Part 5: Backup story — FuFight (draft — verify against TODO 10)
+ - Part 5: Backup story — FuFight (draft — still unconfirmed, see earlier TODO)
+ - Part 6: Slide outline for the Project Deep Dive (confirmed format: 1-2 slides)
 
  ---
 
@@ -103,97 +107,103 @@ import Foundation
  your own words — the goal is to internalize the *structure*, not recite this script.
 
  **Situation** *(~20 seconds)*
- > "At PayPal I worked on the Payments team, on a feature called Make-A-Payment — the one-time
- > payment flow. Partway through, product decided Autopay, our recurring-payment setup, should reuse
- > the same amount-entry-and-review screen instead of maintaining a separate one, mainly to keep the
- > experience consistent and cut down on duplicated UI work across two flows that were fundamentally
- > doing the same core thing."
+ > "At PayPal, on the Payments team, I worked on Make-A-Payment — a four-screen flow for paying down a
+ > balance: pick an amount, pick a payment method, review before submitting, and a confirmation
+ > screen. I built it mainly with my mentor — the two of us were the iOS engineers on the feature —
+ > with a product-team point of contact we could go to for UI and wireframe questions."
 
  **Task** *(~45 seconds)*
- > "This was about a 3.5-month project, a team of four iOS engineers plus one backend engineer, a PM,
- > and a designer. I owned the navigation and state architecture for the shared screen specifically —
- > designed it and built the core of it, with two teammates building out the flow-specific screens on
- > either side of it. The hard part was that 'reuse' wasn't free: one-time payments allowed paying
- > from a linked bank account, a card, or PayPal balance, each with different fee rules, while Autopay
- > required a stable funding source, so PayPal balance wasn't a valid option there — and Autopay's
- > setup was a multi-step wizard where a user could background the app mid-setup and needed to come
- > back to an intact draft, while one-time payment was a simple three-step flow with no persistence
- > need at all. So the same screen had to behave differently depending on which flow launched it,
- > without becoming a screen full of `if isAutopay` branches."
+ > "Most of the work ran January through March this year, with a few final bug fixes into April. My
+ > mentor built the first screen, amount entry, backed by a GraphQL query he owned — I fixed a couple
+ > of issues in it, but the three screens after that were mine: choosing a payment method, reviewing
+ > the payment, and confirmation, plus the GraphQL mutation that actually submits the payment, which I
+ > wired up in the review screen. We used an existing MVI architecture with a TCA-style lifecycle and
+ > a specific navigation pattern already established app-wide — I didn't design that, it predated me —
+ > but this was one of only two flows in the app at the time with genuinely complex conditional
+ > navigation. On top of that, the mobile team was mid-migration from UIKit to SwiftUI, so a lot of
+ > patterns were still being figured out in parallel, and we were dealing with flaky tests and CI at
+ > the same time."
 
  **Action** *(~90 seconds)*
- > "Our first instinct, given a launch deadline tied to a marketing push, was to just duplicate the
- > screen for Autopay — fastest path, ship on time. I pushed back on that in design review, because we
- > had a design-system refresh already planned for the following quarter, and duplicating meant every
- > future visual change had to be made and QA'd twice. A teammate then proposed a middle ground — keep
- > one view, but thread an `isAutopay` boolean through it. I didn't love that either: it meant the view
- > itself had to know about both flows, which made almost every unit test branch on that flag, and it
- > would only get worse if a third flow ever reused the screen. What we landed on was a
- > `PaymentFlowContext` protocol — each flow supplies its own funding sources, fee rules, and
- > validation, and the shared reducer just consumes whatever context it's given, with zero knowledge
- > of which concrete flow it's in. There was a real disagreement along the way: I wanted that protocol
- > to also own the screen's copy — button labels, error strings — but our tech lead felt that mixed
- > business logic with presentation concerns. We resolved it by splitting it: the `PaymentFlowContext`
- > protocol stayed strictly business rules — funding sources, fee calculation, validation — and a
- > separate, lightweight `FlowCopyProvider` handled copy. That review, and the tech lead's sign-off on
- > the split, is honestly what made the design hold up as more flows got added later."
+ > "The review screen defaults the payment date to today, but has a calendar for picking a later date,
+ > and shows a warning sheet if you pick a date past the due date. You can change the payment method
+ > two ways — the back button pops you to the method-picker, or a dedicated change button pushes it
+ > again on top, showing every option with a checkmark on whatever's currently selected; picking a new
+ > one pops you back to review. The hard part was two business rules that don't fit a simple
+ > push-once/pop-once model. First: if PayPal balance is the selected method and you pick a future
+ > date, balance isn't valid for a future-dated payment, so we immediately push the method-picker again
+ > to force a real backup — bank or debit — then pop back to review. Second: if debit is selected and
+ > you pick a future date, that routes through the PayPal-balance case — the method gets set to PayPal
+ > balance, which itself isn't valid for a future date, so the picker pushes *again* to get a real
+ > backup, then pops back. So a single date change could take you two navigation pushes deep before you
+ > land back on review, and all of that had to happen correctly on top of a navigation pattern and
+ > architecture that already existed — the job wasn't inventing a new pattern, it was encoding these
+ > rules into the existing reducer/navigation flow without turning it into a pile of special cases,
+ > while the rest of the team was simultaneously still working out SwiftUI conventions and fighting CI
+ > flakiness."
 
  **Result** *(~30 seconds)*
- > "It shipped on time for the launch. Because Autopay reused an already-hardened screen instead of a
- > freshly built one, its setup-completion rate came in noticeably higher than our early estimates —
- > fewer users dropped off mid-setup than the team expected based on the old UIKit Autopay flow's
- > numbers. Navigation-related bug reports against the payment flow, which had been one of the more
- > commonly filed categories against the old Autopay screen, dropped close to zero in the release
- > cycle after launch. And when the design-system refresh landed the next quarter, updating one shared
- > screen instead of two saved real engineering time that the team had budgeted for and didn't end up
- > needing."
+ > "It shipped, and despite the conditional-navigation complexity being the riskiest part of the
+ > feature, and despite the team-wide UIKit-to-SwiftUI churn and flaky CI at the time, this was one of
+ > the features with very few bugs reported by QA — and zero bugs reported in friends-and-family
+ > testing or in production after launch."
 
  ---
 
  ## Part 4: Anticipated follow-up questions + example answers
 
- - **"Why not just duplicate the view for Autopay instead of sharing it?"**
-   > "We actually started down that path, given the deadline — it was the fastest option. What
-   > changed my mind was the design-system refresh already on the roadmap for the next quarter: two
-   > views meant every visual change got made and QA'd twice, and they'd drift apart over time as each
-   > got independent bug fixes. The tradeoff is real, though — a shared view needs more discipline
-   > about what's flow-specific versus shared, and it's a slightly harder mental model for someone new
-   > to the code."
+ - **"Walk me through what happens if someone's paying with PayPal balance and picks a date after
+   today."**
+   > "On the review screen, changing the date to a future date triggers an immediate push of the
+   > payment-method screen, because PayPal balance isn't a valid funding source for a future-dated
+   > payment. The user picks a real backup — a bank or a debit card — and we pop back to review with
+   > that new method reflected, including whatever fee or date-warning logic applies to it."
 
- - **"How would this scale to a third payment flow reusing the same view?"**
-   > "Cleanly, for the business-logic side — a third flow just supplies its own
-   > `PaymentFlowContext` conformance, and the shared reducer doesn't change. Where it wouldn't scale
-   > cleanly as-is: the Router only knew about two exit destinations, a confirmation screen or a
-   > cancel path. A third flow with a genuinely different completion step — say, one that needed a
-   > follow-up verification screen — would need the Router's contract extended. That was a known,
-   > scoped gap we didn't solve because we didn't have a third flow yet."
+ - **"What about if they're on debit and pick a future date?"**
+   > "That one's less direct — debit also isn't valid for a future date, but instead of going straight
+   > to a backup picker, it routes through the PayPal-balance case: the method gets set to PayPal
+   > balance first, and since that's also invalid for a future date, the picker pushes again to collect
+   > a real backup, then pops back to review. So that specific combination can be two pushes deep off a
+   > single date change." *(Note: confirm with yourself the "why route through PayPal balance" reasoning
+   > per TODO 4 above — if there's a real business reason, say it here; if it's just an implementation
+   > detail of how the state machine was structured, it's fine to describe it that way too.)*
+
+ - **"You said you didn't design the architecture — what did you actually build, then?"**
+   > "The architecture and navigation pattern were app-wide conventions that predated me — MVI with a
+   > TCA-style lifecycle. What I built was three of the four screens, the GraphQL mutation, and all of
+   > the conditional navigation logic for this flow specifically — encoding those funding-source/date
+   > business rules into the existing pattern correctly, which is a different skill than inventing a
+   > pattern from scratch: you're extending something you don't fully control the shape of."
+
+ - **"How did the UIKit-to-SwiftUI transition affect this work?"**
+   > "It meant a lot of the SwiftUI-side conventions the team would eventually standardize on weren't
+   > settled yet while I was building this, and we were dealing with flaky tests and CI on top of that.
+   > I'd call that out as context for why the low bug count mattered more than it might on a calmer
+   > project — the conditions weren't ideal."
 
  - **"What was the hardest bug you hit building this?"**
-   > "A funding-source switch bug. If a user changed their funding source while reviewing the payment
-   > — say from a bank account to a card — the fee display didn't update. It turned out the reducer's
-   > fee recalculation was only wired to a subset of the state-change cases, and switching funding
-   > source wasn't one of them, so the UI kept showing the old fee. A beta tester caught it, not our
-   > tests, which was the real problem. Once fixed, I added a state-derivation test that explicitly
-   > covered funding-source changes, since that was the exact class of bug our existing tests missed."
+   > *(Open — no specific bug confirmed yet. If you have a real one, even roughly remembered, it's a
+   > much stronger answer than a generic "we tested carefully." Fill this in and I'll tighten the
+   > phrasing.)*
 
- - **"If you had another month, what would you improve?"**
-   > "Two things. I'd have pushed for the `FlowCopyProvider` split from day one instead of adding it
-   > mid-project once the disagreement came up — it was the right call, just later than it should've
-   > been. And I'd have written the state-derivation tests, like the fee-recalculation one, proactively
-   > for every case in the reducer rather than reactively after a bug surfaced."
+ - **"How do you know it launched cleanly — was there a real number, or a dashboard?"**
+   > *(You gave me "very few bugs reported by QA, zero in friends-and-family, zero in production" — if
+   > you have an actual QA bug count, or know how bugs were tracked, e.g. Jira ticket count against this
+   > feature, that turns this from a qualitative claim into a number, which the framework in Part 1
+   > explicitly rewards.)*
 
- - **"How was this decision reviewed — did you get sign-off from anyone, or was it your call?"**
-   > "It went through a design review with our tech lead and one senior peer, and the PM signed off on
-   > the scope/timeline tradeoff of doing the shared-view approach instead of the faster duplicate-view
-   > option. The copy-versus-business-logic split specifically was the tech lead's call after I raised
-   > it — I drove the proposal, but it wasn't a unilateral decision."
+ - **"Tell me about a time you disagreed with a teammate on this project."**
+   > *(Not covered by what you described — see TODO 7. Worth having something real ready, even minor,
+   > since this is a very commonly asked follow-up to a project deep-dive.)*
 
  ---
 
  ## Part 5: Backup story — FuFight
 
  A lighter-weight second story in case the interviewer asks for "another project" or specifically "a
- time you disagreed with someone" and PayPal doesn't fit that angle.
+ time you disagreed with someone" and PayPal doesn't fit that angle. Unchanged from the earlier draft
+ of this page — still carries its own unconfirmed-specifics caveat from before, separate from the
+ Make-A-Payment corrections above.
 
  - **Project:** FuFight, a personal real-time 1v1 fighting-mechanics app — built solo on the iOS/UI
    side, with a friend contributing art assets and helping think through backend/sync questions.
@@ -206,12 +216,60 @@ import Foundation
    further — client-authoritative had noticeably better feel (no input lag), server-authoritative
    caught the one deliberate desync test cleanly. Landed on a hybrid: client-predicted locally for
    responsiveness, server-validated asynchronously with a rollback-and-correct if the two disagreed —
-   a smaller-scale version of the same "don't guess, prototype and measure" instinct from the PayPal
-   story.
+   a smaller-scale version of the same "don't guess, prototype and measure" instinct.
  - **The outcome:** shipped the hybrid model; it held up under casual testing without needing a full
    rollback-correction to actually fire in normal play, which suggested client prediction was accurate
    enough in practice that the server-authority was mostly a safety net rather than something users
    would feel.
+
+ ---
+
+ ## Part 6: Slide outline for the Project Deep Dive (confirmed format: 1-2 slides)
+
+ Michael's exact ask: cover **conception → launch**, **team size**, **scope**, and **impact**, in
+ 1-2 slides. That's a prompt for *you* to talk over, not a document to be read — keep text to short
+ phrases, not full sentences, and let the spoken version (Part 3 above) carry the actual narrative.
+
+ **Slide 1 — "Make-A-Payment: Conditional Payment Navigation"**
+ ```
+ CONCEPTION
+ • Four-screen one-time payment flow: choose amount → choose payment method → review → confirmation
+
+ TEAM & SCOPE
+ • Jan-Mar this year, final bug fixes into April
+ • iOS: mentor + me. Mentor built screen 1 (amount entry) + its query, I fixed issues in it.
+ • I built screens 2-4, the GraphQL mutation, and all conditional navigation logic
+ • Product-team POC for UI/wireframe questions
+ ```
+
+ **Slide 2 — "The Hard Part, and What Shipped"**
+ ```
+ THE CHALLENGE
+ • Review screen: date picker (default today, calendar, due-date warning) + change-method flow
+   (back pops, dedicated button pushes the picker again with a checkmark on current selection)
+ • PayPal balance AND debit both become invalid once a future date is picked — each triggers a
+   conditional re-push of the method picker to force a valid backup source before popping back
+ • Built on an existing MVI + TCA-lifecycle architecture and navigation pattern I didn't design,
+   during the team's UIKit → SwiftUI transition, with flaky CI/tests at the time
+
+ LAUNCH & IMPACT
+ • Very few bugs reported by QA
+ • Zero bugs in friends-and-family testing
+ • Zero bugs in production
+ ```
+
+ **Building it:**
+ - Tool doesn't matter (Keynote/Google Slides/PowerPoint) — what matters is text density: if a
+   bullet needs more than ~6 words to make sense standalone, it belongs in what you SAY, not on the
+   slide.
+ - One simple diagram earns its place if you have 10 minutes to make one: four boxes in a row —
+   Amount → Method → Review → Confirmation — with a branching arrow off Review showing the
+   conditional push back into Method for the balance/debit + future-date cases. That visually carries
+   the entire "why this navigation was hard" argument without you needing to explain it from scratch.
+ - Rehearse with the slides up, out loud, timed — the goal is the deck prompts you, you don't read
+   it. If you're reading bullets verbatim, cut more text.
+ - This maps directly to Part 3's spoken narrative above — once the open TODOs are filled in, both
+   stay consistent since they're built from the same facts.
 
  [↑ Back to Top](#top)
 */
