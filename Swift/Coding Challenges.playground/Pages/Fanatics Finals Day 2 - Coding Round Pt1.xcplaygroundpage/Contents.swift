@@ -3,190 +3,321 @@
 import Foundation
 
 /*:
- # Fanatics Prep — Day 2: Coding Round Pt 1 — Arrays, Strings, Hashmaps
+ # Fanatics Prep — Day 2 (as actually run): System Design + Domain Modeling in Swift
 
- Public candidate reports (general SWE roles, not iOS-specific, possibly a different/older process —
- see Day 0, Part 7) describe the coding round as **1 hour, remote, "not LeetCode medium/hard"
- difficulty**. Read that as a signal to prioritize speed, clean code, and clear communication over
- knowing an obscure algorithm — for a *senior* role, the bar is less "can you solve it at all" and
- more "do you solve it fast, cleanly, and explain your tradeoffs like someone who'd review someone
- else's PR for the same problem."
+ **CORRECTED 2026-08-27.** This page previously guessed Round 2 was a SwiftUI-with-AI-assistance build.
+ That guess was wrong. What actually happened: a **system-design + coding round, no UI needed**,
+ two parts — sketch the design on a drawing tab, then implement a plain-Swift, in-memory domain model.
+ The real prompt (verbatim):
+
+ > You pull into a busy parking lot. At the entrance you're handed a ticket. You drive in, find a spot
+ > that fits your vehicle, and park. When you come back, you present the ticket at the exit, the system
+ > works out what you owe, and your spot goes back into circulation. Behind the scenes, the system is
+ > matching vehicles to spots by size, recording when each vehicle arrived and left, and keeping
+ > availability current for everyone still driving in. Design and build that system.
+ > Scope: a domain model in plain Swift. No UI, no database, no real payment processing. Everything in
+ > memory.
+
+ This is a classic **object-oriented design (OOD)** interview format — Parking Lot, Elevator, Vending
+ Machine, Library System are the well-known family. The evaluation axis is: do you model entities with
+ the right semantics (value vs. reference), do you handle the edge cases the prompt implies without being
+ told explicitly (rejection, availability, pricing), and do you keep the API small and honest.
 
  ## Contents
- - Part 1: The approach — narrate before you type
- - Part 2: Two Sum (hashmap warm-up)
- - Part 3: Group Anagrams
- - Part 4: Longest Substring Without Repeating Characters (sliding window)
- - Part 5: [public-reported] An ASCII chart-plotting problem — an actual Fanatics report
- - Part 6: Senior-level follow-ups to expect after "the right answer"
+ - Part 1: Postmortem on the attempted solution — the mistakes, and why they're the same lesson as
+   Round 1's `rawValue`/`id` bug
+ - Part 2: The design
+ - Part 3: The implementation
+ - Part 4: Demo / usage
+ - Part 5: Questions that should've been asked — interviewer vs. AI
+ - Part 6: The general OOD checklist — for the next one of these, if there is one
 
  ---
 
- ## Part 1: The approach — narrate before you type
+ ## Part 1: Postmortem on the attempted solution
 
- Same advice that applies everywhere in this format (it's explicitly graded in most companies' rubrics,
- not just implied): restate the problem in your own words, ask 1–2 clarifying questions (empty input?
- duplicates? sorted?), state the brute-force complexity, then state the better approach *before* typing
- it. For "not medium/hard" problems specifically, resist the urge to rush straight to code just because
- it feels easy — the narration is graded independently of correctness.
+ The first attempt got tripped up on **mechanics**, not the actual hard part of the problem:
+
+ 1. `Spot.enter`/`.exit` weren't marked `mutating` on a `struct` — doesn't compile as written.
+ 2. `.now()` — `Date.now` is a static *property*, not a callable method.
+ 3. `sizeType` was commented out on `Spot` but referenced elsewhere (`spot.sizeType`) — dangling
+    reference.
+ 4. `for spot in spots` where `spots: [SizeType: [Spot]]` iterates dictionary `(key, value)` tuples, not
+    individual `Spot`s.
+ 5. **The real lesson, and it's the exact same shape as Round 1's `rawValue`-instead-of-`id` bug just in
+    a different costume:** a spot that needs to be "the same object, mutated in place, visible from
+    everywhere that holds a reference to it" needs **reference semantics**. Storing `Spot` as a `struct`
+    inside a `[SizeType: [Spot]]` means any spot pulled out via iteration is a **copy** — mutating it
+    never writes back into the stored array. This is an identity bug, structurally identical to using a
+    `rawValue` where a stable `id` was needed: both are "the type doesn't actually give you a stable
+    handle on the thing you're trying to track."
+ 6. **No `Ticket` type at all** — the prompt is explicit that a ticket is handed out at entry and
+    presented at exit. Without it, there's no way to know which spot a returning vehicle belongs to,
+    especially with two same-size vehicles parked at once.
+ 7. **No pricing logic** — the actual "what do they owe" requirement was never implemented.
+ 8. **No rejection for "this lot doesn't have that size category at all"** — and `exitParking` was left
+    unfinished, which compounds with #5/#6 (there was no working way to find the right spot regardless).
+
+ None of this reflects an inability to reason about the problem — the value-type/mutation trap ate the
+ time budget before the parts that actually score points (pricing, tickets, rejection) got built. Good
+ thing to know about your own failure mode under pressure: **lock down value-vs-reference semantics for
+ anything with identity in the first 60 seconds, before writing any logic that depends on it.**
 
  ---
 
- ## Part 2: Two Sum
+ ## Part 2: The design
 
- > **Problem:** Given an array of integers and a target, return the indices of the two numbers that
- > add up to the target. Assume exactly one solution exists.
+ ```
+ Vehicle         — id, size                                    (struct — plain data)
+ ParkingSpot     — id, size, occupiedBy: UUID?                  (class — needs identity/shared mutation)
+ Ticket          — id, vehicleID, spotID, entryTime             (struct — immutable record)
+ PricingStrategy — protocol, cost(for:duration:)                (protocol-first — swappable, testable)
+ ParkingLot      — owns spots grouped by size + active tickets; enter()/exit() are the only entry points
+ ```
 
- The canonical "do you reach for a hashmap instead of nested loops" warm-up.
+ **Entry:** `enter(vehicle)` → does the lot have this size category at all? (if not, reject) → find a
+ same-size spot that's free (if none, reject — "full," a distinct case from "unsupported size") → occupy
+ it → mint a `Ticket` → hand it back.
+
+ **Exit:** `exit(ticket)` → look up the spot the ticket points to → compute
+ `pricing.cost(size, duration)` → free the spot → invalidate the ticket (so it can't be replayed).
+
+ The `ParkingLot` never exposes `ParkingSpot` directly to callers — only `Ticket`s and fees — which keeps
+ the "spot" concept an internal implementation detail, the same instinct as protocol-first networking
+ layers from the original Day 2 draft: hide the mutable internals behind a small, intention-revealing API.
+
+ ---
+
+ ## Part 3: The implementation
 */
 
-func twoSum(_ nums: [Int], _ target: Int) -> [Int] {
-    var seen: [Int: Int] = [:]   // value -> index
+enum VehicleSize {
+    case small, medium, large
+}
 
-    for (index, num) in nums.enumerated() {
-        let complement = target - num
-        // Check BEFORE inserting the current number — otherwise a value that happens to equal
-        // its own complement (e.g. target 6, num 3) would incorrectly pair an index with itself.
-        if let complementIndex = seen[complement] {
-            return [complementIndex, index]
+struct Vehicle {
+    let id = UUID()
+    let size: VehicleSize
+}
+
+// A ticket is the actual contract handed to the driver — it's the thing presented at exit, not an
+// internal bookkeeping detail invented after the fact. Modeling it explicitly is what the prompt is
+// describing literally, and it's what the attempted solution skipped.
+struct Ticket {
+    let id = UUID()
+    let vehicleID: UUID
+    let spotID: UUID
+    let entryTime: Date
+}
+
+// Reference type on purpose: multiple parts of the system need to observe the SAME spot flip from
+// available to occupied, not an independent copy — see Part 1, mistake #5.
+final class ParkingSpot {
+    let id = UUID()
+    let size: VehicleSize
+    private(set) var occupiedBy: UUID?   // vehicle id; nil when free
+
+    init(size: VehicleSize) {
+        self.size = size
+    }
+
+    var isAvailable: Bool { occupiedBy == nil }
+
+    func occupy(vehicleID: UUID) { occupiedBy = vehicleID }
+    func vacate() { occupiedBy = nil }
+}
+
+enum ParkingError: Error, Equatable {
+    case unsupportedVehicleSize(VehicleSize)   // the lot has no spots of this size category at all
+    case noAvailableSpot(VehicleSize)          // the size exists, but every spot is currently occupied
+    case invalidTicket                         // unknown, or already used to exit once already
+}
+
+extension ParkingError: CustomStringConvertible {
+    var description: String {
+        switch self {
+        case .unsupportedVehicleSize(let size): "This lot has no \(size) spots."
+        case .noAvailableSpot(let size): "No available \(size) spots right now."
+        case .invalidTicket: "This ticket isn't valid — already used, or not recognized."
         }
-        seen[num] = index
     }
-    return []
 }
 
-twoSum([2, 7, 11, 15], 9)   // [0, 1]
-twoSum([3, 3], 6)           // [0, 1] — the self-complement case the ordering above guards against
-
-/*:
- **What to say out loud:** "brute force is O(n²) checking every pair; a hashmap gets this to O(n) time
- / O(n) space by trading the second loop for a lookup — and I'm checking for the complement before I
- insert the current value, so a number that pairs with itself doesn't match against its own index."
-
- ---
-
- ## Part 3: Group Anagrams
-
- > **Problem:** Given an array of strings, group the ones that are anagrams of each other.
-
- The pattern-recognition test here: anagrams share a **sorted-character signature**, so that signature
- is the natural hashmap key.
-*/
-
-func groupAnagrams(_ strs: [String]) -> [[String]] {
-    var groups: [String: [String]] = [:]
-
-    for str in strs {
-        // Sorting each string into a canonical key is what makes "eat"/"tea"/"ate" collide into the
-        // same bucket — any two anagrams sort to the identical character sequence.
-        let key = String(str.sorted())
-        groups[key, default: []].append(str)
-    }
-    return Array(groups.values)
+// Protocol-first: an interviewer can ask "how would you change the rate structure" and the answer is
+// "swap the strategy," not "rewrite ParkingLot" — the same reason the networking layer earlier in this
+// prep pack is built behind a protocol.
+protocol PricingStrategy {
+    func cost(for size: VehicleSize, duration: TimeInterval) -> Double
 }
 
-groupAnagrams(["eat", "tea", "tan", "ate", "nat", "bat"])
-// [["eat","tea","ate"], ["tan","nat"], ["bat"]] (order of groups/within groups not guaranteed)
+struct HourlyPricing: PricingStrategy {
+    let ratesPerHour: [VehicleSize: Double]
 
-/*:
- **Complexity worth stating:** O(n · k log k) where n is the array length and k is the max string
- length — sorting each string dominates. A follow-up worth anticipating: "can you avoid the sort?" —
- yes, a character-frequency count (26-length array or dictionary) as the key gets this to O(n · k), a
- good senior-level optimization to volunteer if there's time.
+    func cost(for size: VehicleSize, duration: TimeInterval) -> Double {
+        let rate = ratesPerHour[size] ?? 0
+        // Round UP to the next full hour — any partial hour bills as a full hour, the common
+        // real-world convention. Worth saying out loud as an assumption, not a silent choice
+        // (Part 5 — this is exactly the kind of thing to ask about instead of guessing).
+        let hours = max(1, Int(ceil(duration / 3600)))
+        return rate * Double(hours)
+    }
+}
 
- ---
+final class ParkingLot {
+    private var spotsBySize: [VehicleSize: [ParkingSpot]]
+    private var activeTickets: [UUID: Ticket] = [:]
+    private let pricing: PricingStrategy
 
- ## Part 4: Longest Substring Without Repeating Characters
+    init(spotsBySize: [VehicleSize: [ParkingSpot]], pricing: PricingStrategy) {
+        self.spotsBySize = spotsBySize
+        self.pricing = pricing
+    }
 
- > **Problem:** Given a string, find the length of the longest substring without repeating characters.
+    func availableCount(for size: VehicleSize) -> Int {
+        (spotsBySize[size] ?? []).filter(\.isAvailable).count
+    }
 
- The classic sliding-window pattern — worth having crisp, since it generalizes to a large family of
- "longest/shortest substring/subarray satisfying a condition" problems.
-*/
-
-func lengthOfLongestSubstring(_ s: String) -> Int {
-    var lastSeenIndex: [Character: Int] = [:]
-    var windowStart = 0
-    var longest = 0
-
-    for (i, char) in s.enumerated() {
-        // Only jump windowStart forward if the previous occurrence is INSIDE the current window —
-        // a stale index from before windowStart would incorrectly shrink a window that's already
-        // valid (e.g. "abba": when the second 'a' is seen, its stored index 0 is before the
-        // window's current start, so it must NOT yank windowStart backward).
-        if let seenAt = lastSeenIndex[char], seenAt >= windowStart {
-            windowStart = seenAt + 1
+    func enter(_ vehicle: Vehicle, at time: Date = .now) throws -> Ticket {
+        guard let candidateSpots = spotsBySize[vehicle.size], !candidateSpots.isEmpty else {
+            throw ParkingError.unsupportedVehicleSize(vehicle.size)
         }
-        lastSeenIndex[char] = i
-        longest = max(longest, i - windowStart + 1)
+        guard let freeSpot = candidateSpots.first(where: \.isAvailable) else {
+            throw ParkingError.noAvailableSpot(vehicle.size)
+        }
+
+        freeSpot.occupy(vehicleID: vehicle.id)
+        let ticket = Ticket(vehicleID: vehicle.id, spotID: freeSpot.id, entryTime: time)
+        activeTickets[ticket.id] = ticket
+        return ticket
     }
-    return longest
+
+    @discardableResult
+    func exit(ticket: Ticket, at time: Date = .now) throws -> Double {
+        guard activeTickets[ticket.id] != nil else {
+            throw ParkingError.invalidTicket
+        }
+        guard let spot = allSpots.first(where: { $0.id == ticket.spotID }) else {
+            throw ParkingError.invalidTicket
+        }
+
+        let fee = pricing.cost(for: spot.size, duration: time.timeIntervalSince(ticket.entryTime))
+        spot.vacate()
+        activeTickets.removeValue(forKey: ticket.id)   // ticket can't be replayed to exit twice
+        return fee
+    }
+
+    private var allSpots: [ParkingSpot] {
+        spotsBySize.values.flatMap { $0 }
+    }
 }
 
-lengthOfLongestSubstring("abcabcbb")   // 3 ("abc")
-lengthOfLongestSubstring("bbbbb")      // 1 ("b")
-lengthOfLongestSubstring("pwwkew")     // 3 ("wke")
-lengthOfLongestSubstring("abba")       // 2 ("ab" or "ba") — the stale-index guard above matters here
-
 /*:
- **What to say out loud:** "I'm keeping a window `[windowStart, i]` that's always duplicate-free —
- when I hit a repeat, I only advance the start past the *previous* occurrence if that occurrence is
- still inside the current window, otherwise I'd shrink a window that's already valid."
-
  ---
 
- ## Part 5: [public-reported] An ASCII chart-plotting problem
-
- A real reported Fanatics interview question (December 2025, role unspecified — treat with the same
- caution as any single-report question): *"Write a program that displays an ASCII chart given data
- like `{(1,2), (2,3), (3,1), (4,6), (5,8)}`."* Low-confidence as a *current* question, but worth a fast
- runnable version since it's cheap prep and tests a different skill than the algorithms above — careful
- 2D-grid/string-building logic under ambiguous spec, which rewards clarifying questions (bar chart or
- scatter? oriented which way? 1-indexed?) more than cleverness.
+ ## Part 4: Demo / usage
 */
 
-func asciiBarChart(_ points: [(x: Int, y: Int)]) -> String {
-    guard let maxY = points.map(\.y).max(), maxY > 0 else { return "" }
+let lot = ParkingLot(
+    spotsBySize: [
+        .small: [ParkingSpot(size: .small), ParkingSpot(size: .small)],
+        .medium: [ParkingSpot(size: .medium)],
+        .large: []   // deliberately empty — demonstrates the "unsupported size" rejection
+    ],
+    pricing: HourlyPricing(ratesPerHour: [.small: 2, .medium: 3, .large: 5])
+)
 
-    var lines: [String] = []
-    // Iterate top-down (maxY first) since a bar chart's tallest row prints FIRST — each row asks
-    // "which points reach at least this height," which is the mirror image of building bottom-up.
-    for row in stride(from: maxY, through: 1, by: -1) {
-        var line = ""
-        for point in points.sorted(by: { $0.x < $1.x }) {
-            line += point.y >= row ? "*  " : "   "
-        }
-        lines.append(line)
-    }
-    lines.append(points.sorted(by: { $0.x < $1.x }).map { "\($0.x)  " }.joined())   // x-axis labels
-    return lines.joined(separator: "\n")
+do {
+    let car = Vehicle(size: .small)
+    let ticket = try lot.enter(car, at: Date().addingTimeInterval(-2.5 * 3600))   // "arrived" 2.5h ago
+    print("Available small spots after entry:", lot.availableCount(for: .small))  // 1
+
+    let fee = try lot.exit(ticket: ticket)
+    print("Fee owed:", fee)                                                       // 3 hours -> 6.0
+    print("Available small spots after exit:", lot.availableCount(for: .small))   // 2
+} catch {
+    print("Unexpected error:", error)
 }
 
-print(asciiBarChart([(1, 2), (2, 3), (3, 1), (4, 6), (5, 8)]))
+do {
+    let truck = Vehicle(size: .large)
+    _ = try lot.enter(truck)
+} catch let error as ParkingError {
+    print("Rejected as expected:", error.description)
+}
+
+do {
+    // Fill both small spots, then a third small vehicle should be rejected as "full," a distinct
+    // case from "unsupported size" above.
+    let smallLot = ParkingLot(
+        spotsBySize: [.small: [ParkingSpot(size: .small)]],
+        pricing: HourlyPricing(ratesPerHour: [.small: 2])
+    )
+    _ = try smallLot.enter(Vehicle(size: .small))
+    _ = try smallLot.enter(Vehicle(size: .small))
+} catch let error as ParkingError {
+    print("Rejected as expected:", error.description)
+}
 
 /*:
- **What to say out loud if given a vague spec like this live:** ask first — bar chart vs. scatter plot,
- whether the x-values are guaranteed contiguous/sorted/1-indexed, and what should happen with negative
- or zero values — this kind of problem is testing whether you interrogate an ambiguous spec before
- building the wrong thing, more than whether you know a specific algorithm.
+ ---
+
+ ## Part 5: Questions that should've been asked — interviewer vs. AI
+
+ **To the interviewer, before writing any code** (all cheap, all would've shaped the design in ways that
+ are hard to retrofit later):
+
+ 1. **"Can a smaller vehicle park in a larger spot if its own size is full, or is it strict same-size
+    matching only?"** — the prompt is ambiguous here, and the answer changes the spot-selection logic
+    materially (a fallback search vs. an exact lookup).
+ 2. **"Is pricing a flat per-hour rate per size, or something with a minimum charge / grace period?"** —
+    "how much they'll be charged" was explicit in the prompt; the *shape* of that pricing wasn't.
+ 3. **"Do partial hours round up, round down, or bill per-minute?"** — a real, easy-to-get-wrong
+    assumption (this solution rounds up, and says so explicitly rather than silently).
+ 4. **"Does 'the parking lot doesn't have the size type it requires' mean the lot was never configured
+    with that category, or does it also cover 'currently zero available, even though the category
+    exists'?"** — these are genuinely two different rejection reasons (`unsupportedVehicleSize` vs.
+    `noAvailableSpot` above), and the prompt's wording plausibly means either.
+ 5. **"Do we need thread-safety, or is single-threaded in-memory enough for this exercise?"** — worth
+    asking once, out loud, then explicitly *not* building for it if the answer is no — over-engineering
+    a scope-capped exercise is its own red flag.
+ 6. **"Should the set of spots be fixed at construction, or does the design need to support adding/
+    removing spots later?"** — changes whether `spotsBySize` needs to be mutable at the `ParkingLot`
+    level beyond just occupancy.
+
+ **To the AI tool, if one was available** (these are prompts that front-load the identity/mutation
+ decision instead of discovering it the hard way mid-solution):
+
+ - *"I'm modeling a parking spot that needs to be found, mutated (occupied/freed), and have that mutation
+   visible everywhere it's referenced — struct or class, and why?"* — asked **before** writing `Spot`,
+   this alone would have prevented every downstream bug in Part 1.
+ - *"Review this domain model against the prompt — does anything in the prompt imply a type I haven't
+   modeled yet?"* — a ticket-shaped gap is exactly the kind of thing this catches, since "you're handed a
+   ticket... present the ticket at the exit" is stated almost verbatim in the prompt.
+ - *"Check this for compile errors before I consider it done"* — cheap, and would have caught the
+   `mutating`/`.now()`/dangling-`sizeType` issues immediately rather than losing time to them live.
+ - *"Generate the edge-case tests for this: full lot, wrong size rejected, exact-hour billing boundary,
+   double-exit on the same ticket"* — a good closing move once the core model exists, and directly
+   demonstrates the "testability" instinct the JD calls out (Day 0, Part 3).
 
  ---
 
- ## Part 6: Senior-level follow-ups to expect after "the right answer"
+ ## Part 6: The general OOD checklist — for the next one of these
 
- Given the "not medium/hard" difficulty signal, expect the bar to shift to **follow-up depth** once
- you've solved the base problem — this is where senior candidates separate from mid-level ones:
+ Parking Lot, Elevator System, Vending Machine, Library/Book-Lending System, Ride-Sharing Matcher — all
+ the same family, all gradable the same way:
 
- - "How would you test this?" — have a real answer: edge cases (empty input, single element, all
-   duplicates), not just "I'd write a unit test."
- - "How would you change this if the input were a stream instead of a fixed array?" (Two Sum → running
-   hashmap without a fixed end; sliding window → naturally already stream-friendly.)
- - "What if the input were too large to fit in memory?" — a fair question for any of these; know when
-   to say "I'd need to chunk/stream it and this exact approach wouldn't scale as-is" rather than forcing
-   an in-memory answer to fit.
- - "Refactor this for readability" — given the JD's explicit call-out of "code quality/refactoring" as
-   a graded dimension, be ready to clean up your own first-pass code once it's correct, not just leave
-   it as the fastest thing that compiled.
+ - [ ] **Identify anything with identity/shared mutable state first** (a spot, an elevator car, a book
+       copy) — that's a `class`, before anything else gets written.
+ - [ ] **Find the "receipt" object the prompt implies but doesn't name outright** — a ticket, a
+       reservation, a loan record — these decouple "the thing that happened" from "the resource it
+       happened to," and are usually the actual point of the exercise.
+ - [ ] **Separate "doesn't exist" from "exists but unavailable"** as distinct error cases — almost every
+       one of these prompts has both, even when only one is stated explicitly.
+ - [ ] **Keep the pluggable part behind a protocol** (pricing here; could be a matching strategy, a
+       notification policy, etc. in other variants) — cheap to add, and it's a free "how would you
+       change X" answer for follow-ups.
+ - [ ] **Ask the 2–3 genuinely ambiguous questions before coding**, don't guess silently — Part 5 above
+       is the template.
 
  [↑ Back to Top](#top)
 */

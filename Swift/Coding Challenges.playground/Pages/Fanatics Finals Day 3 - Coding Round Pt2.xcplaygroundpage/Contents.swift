@@ -3,185 +3,162 @@
 import Foundation
 
 /*:
- # Fanatics Prep — Day 3: Coding Round Pt 2 — Graphs, BFS & Trees
+ # Fanatics Prep — Day 3: Round 3 — Behavioral
 
- One candidate report specifically named a **LeetCode BFS question, "similar to Word Ladder"** as an
- actual asked Fanatics question (general SWE round, not confirmed iOS-specific — see Day 0, Part 7's
- confidence tags). That's the single most concrete data point available, so it gets full treatment
- here. Trees are added as a standard senior-level rounding-out, since BFS and tree traversal share the
- same mental model (level-order processing via a queue).
+ **CONFIRMED 2026-08-27, replacing this page's earlier "graphs/BFS/trees" guess.** The real loop, now
+ fully known: foundation call (Day 1) → Round 1 bug-hunt in a given codebase (completed — rewards bug,
+ root cause was using `rawValue` instead of `id`) → Round 2 from-scratch build with AI tools allowed
+ (Day 2) → **Round 3: behavioral.** There is no separate "graphs/trees" or "iOS-style" round in the real
+ loop — this page is now the guide for what's actually next.
 
  ## Contents
- - Part 1: Word Ladder — the confirmed pattern, worked in full
- - Part 2: Generic graph BFS template (what to reach for if the exact problem differs)
- - Part 3: Binary tree level-order traversal
- - Part 4: Two other reported questions (different/lower-confidence role) — brief awareness only
+ - Part 1: What this round is likely evaluating, given the role shape
+ - Part 2: STAR, compressed
+ - Part 3: Likely questions with full model answers (built from your existing story bank)
+ - Part 4: Questions to ask them — different flavor from Day 1's recruiter list, not a repeat
+ - Part 5: How to close
+ - Part 6: Pre-round checklist
 
  ---
 
- ## Part 1: Word Ladder — the confirmed pattern
+ ## Part 1: What this round is likely evaluating
 
- > **Problem:** Given a `beginWord`, an `endWord`, and a `wordList`, return the length of the shortest
- > transformation sequence from `beginWord` to `endWord`, changing exactly one letter at a time, where
- > every intermediate word must exist in `wordList`. Return 0 if no such sequence exists.
-
- The key insight: treat every word as a graph node, with an edge between two words if they differ by
- exactly one letter. The shortest transformation sequence is then just **BFS shortest path** — which is
- the whole reason this is a "BFS question" and not a string-manipulation question.
-*/
-
-func ladderLength(_ beginWord: String, _ endWord: String, _ wordList: [String]) -> Int {
-    var wordSet = Set(wordList)
-    guard wordSet.contains(endWord) else { return 0 }
-
-    var queue: [(word: String, steps: Int)] = [(beginWord, 1)]
-    let alphabet = Array("abcdefghijklmnopqrstuvwxyz")
-
-    while !queue.isEmpty {
-        let (current, steps) = queue.removeFirst()
-        if current == endWord { return steps }
-
-        var chars = Array(current)
-        for i in chars.indices {
-            let original = chars[i]
-            for letter in alphabet where letter != original {
-                chars[i] = letter
-                let candidate = String(chars)
-                // Removing from wordSet the moment it's enqueued — not after it's dequeued — is
-                // what prevents the SAME candidate word from being pushed onto the queue multiple
-                // times by different words in this same level, which would blow up the queue size
-                // without ever changing the answer.
-                if wordSet.contains(candidate) {
-                    wordSet.remove(candidate)
-                    queue.append((candidate, steps + 1))
-                }
-            }
-            chars[i] = original   // restore before trying the next letter position
-        }
-    }
-    return 0
-}
-
-ladderLength("hit", "cog", ["hot", "dot", "dog", "lot", "log", "cog"])   // 5: hit->hot->dot->dog->cog
-ladderLength("hit", "cog", ["hot", "dot", "dog", "lot", "log"])          // 0: "cog" not in wordList
-
-/*:
- **Why BFS and not DFS:** BFS explores level by level, so the *first* time you reach `endWord` is
- guaranteed to be via the shortest path — DFS would find *a* path first, not necessarily the shortest
- one, and would need extra bookkeeping to guarantee minimality. This "BFS = shortest path in an
- unweighted graph" fact is worth stating out loud unprompted — it's the actual reason to reach for BFS
- here rather than something you back into by trial and error.
-
- **Complexity worth stating:** for each word (length L) popped from the queue, trying all 26 letters at
- each of the L positions is O(26 · L) work, against up to N words — O(26 · L² · N) worst case, since
- building each candidate string is itself O(L).
+ A behavioral round this late in a senior, sole-iOS-owner loop is rarely generic "tell me about a
+ conflict" filler — it's almost always checking for the specific traits that matter *because* of the role
+ shape (Day 0, Part 1–2): can you operate with real autonomy, make defensible calls with no other iOS
+ engineer to sanity-check you, communicate technical reasoning to a KMP/Go-fluent team, and handle
+ ambiguity without stalling. Expect the interviewer (likely the hiring manager and/or a team member, not
+ Korey) to probe past your rehearsed pitch into specifics — "what exactly did *you* do" not "what did the
+ team do."
 
  ---
 
- ## Part 2: Generic graph BFS template
+ ## Part 2: STAR, compressed
 
- If the exact problem differs from Word Ladder but still smells like "shortest path / fewest steps /
- minimum transformations," this is the template to reach for — Word Ladder above is one instance of it,
- with "neighbors" defined implicitly (one-letter-different words) instead of an explicit adjacency list.
-*/
-
-func bfsShortestPath(from start: Int, to target: Int, graph: [Int: [Int]]) -> Int {
-    guard start != target else { return 0 }
-
-    var visited: Set<Int> = [start]
-    var queue: [(node: Int, dist: Int)] = [(start, 0)]
-
-    while !queue.isEmpty {
-        let (node, dist) = queue.removeFirst()
-        for neighbor in graph[node, default: []] {
-            if neighbor == target { return dist + 1 }
-            if !visited.contains(neighbor) {
-                visited.insert(neighbor)
-                queue.append((neighbor, dist + 1))
-            }
-        }
-    }
-    return -1   // unreachable
-}
-
-let sampleGraph = [0: [1, 2], 1: [0, 3], 2: [0, 3], 3: [1, 2, 4], 4: [3]]
-bfsShortestPath(from: 0, to: 4, graph: sampleGraph)   // 3
-
-/*:
- The three ingredients that stay constant across every BFS-shortest-path variant: a **queue** (not a
- stack — that's DFS), a **visited set marked at enqueue time** (not at dequeue time — same double-enqueue
- bug the `wordSet.remove` line above guards against), and **level/distance tracked alongside each node**.
+ **Situation** (1 sentence of context) → **Task** (what was actually yours to solve) → **Action** (the
+ specific decisions/steps you took — this is the part interviewers actually listen for, don't rush it) →
+ **Result** (outcome, ideally with a number or a concrete change). Most candidates under-invest in Action
+ and over-invest in Situation — flip that ratio.
 
  ---
 
- ## Part 3: Binary tree level-order traversal
+ ## Part 3: Likely questions, with full model answers
 
- Trees weren't specifically reported for Fanatics, but they're a standard senior-level rounding-out
- question, and level-order traversal is literally BFS on a tree — the same queue-based mental model as
- Parts 1–2, just with a tree's `left`/`right` children standing in for graph neighbors.
-*/
+ **"Tell me about a time you disagreed with a technical decision, or had to push back."**
 
-class TreeNode {
-    let value: Int
-    var left: TreeNode?
-    var right: TreeNode?
-    init(_ value: Int, left: TreeNode? = nil, right: TreeNode? = nil) {
-        self.value = value
-        self.left = left
-        self.right = right
-    }
-}
+ > "The clearest example is actually from this loop — when Korey and I were first talking through the
+ > role, before I'd even started formal prep, I told him that a feature like Add to Apple Wallet should
+ > live entirely in native iOS code, not routed through the team's shared Kotlin Multiplatform module.
+ > The instinct wasn't 'Kotlin can't call it' — technically it can reach older Objective-C-based
+ > frameworks — it's that there's zero reuse value: Android's equivalent, Google Wallet, is a totally
+ > different SDK, so a shared `expect`/`actual` for it would have exactly one real implementation and a
+ > stub on the other side, which isn't what shared code is for. I raised that unprompted, before anyone
+ > asked me to. That's the kind of call I'd expect to make regularly here, being the only iOS voice in a
+ > room that defaults to 'can this be shared.'"
 
-func levelOrder(_ root: TreeNode?) -> [[Int]] {
-    guard let root else { return [] }
+ **"Walk me through the biggest technical project you've led or driven."**
 
-    var result: [[Int]] = []
-    var queue: [TreeNode] = [root]
+ > "That's the UIKit-to-SwiftUI rewrite on PayPal's Credit Card mobile team. I joined while the app was
+ > still fully UIKit, and within a few months the team decided to rebuild the entire thing in SwiftUI. I
+ > worked on it alongside roughly twenty-five to thirty engineers — not just my own screens, but helping
+ > other people reason through the state-management differences between the two paradigms, since that was
+ > the part that tripped people up most. The result was a fully modern SwiftUI app across all of our
+ > credit-card flows. What I'd actually highlight if asked to go deeper: sequencing which screens moved
+ > first mattered more than raw coding speed — we moved lower-risk, less-trafficked screens early to work
+ > out our shared patterns (navigation, state ownership) before touching the highest-traffic flows like
+ > Make-A-Payment."
 
-    while !queue.isEmpty {
-        // Snapshotting queue.count BEFORE the inner loop is what separates one tree LEVEL from the
-        // next — without it, nodes appended to `queue` for the NEXT level would get consumed by
-        // this same inner loop, collapsing every level into one flat list instead of one list per row.
-        let levelSize = queue.count
-        var currentLevel: [Int] = []
+ **"Tell me about a time you had to get up to speed on something unfamiliar quickly."**
 
-        for _ in 0..<levelSize {
-            let node = queue.removeFirst()
-            currentLevel.append(node.value)
-            if let left = node.left { queue.append(left) }
-            if let right = node.right { queue.append(right) }
-        }
-        result.append(currentLevel)
-    }
-    return result
-}
+ > "Two real examples, actually. The longer-term one: I came into this process with zero production KMP
+ > experience, and rather than treat that as a gap to hide, I worked through the `expect`/`actual` model
+ > and where the iOS/Kotlin boundary actually causes friction, so I could speak concretely about the
+ > day-to-day even without having shipped it. The more immediate one: earlier today, in this same
+ > interview loop, I did a build-from-scratch round where AI tools were explicitly allowed — which is
+ > itself a 'get up to speed fast' moment, since the actual skill being tested wasn't typing Swift from
+ > memory, it was directing an AI tool like a fast junior pair — stating architecture before prompting,
+ > verifying every generated chunk before accepting it, catching the kind of subtle bug AI tends to
+ > introduce."
 
-let sampleTree = TreeNode(3, left: TreeNode(9), right: TreeNode(20, left: TreeNode(15), right: TreeNode(7)))
-levelOrder(sampleTree)   // [[3], [9, 20], [15, 7]]
+ **"Tell me about a bug you found or a mistake you made, and how you handled it."**
 
-/*:
- **What to say out loud:** "I'm snapshotting `queue.count` before draining the current level, so
- children I append during this pass don't get pulled into the same row — that's what turns plain BFS
- into *level-order* BFS."
+ > If reusing today's Round 1 story feels redundant since this same company already watched it happen,
+ > pivot to a genuine PayPal example instead — have one ready before the round: a specific bug, the wrong
+ > assumption behind it, how you found it (not just "I fixed it"), and what you changed afterward
+ > (a test added, a lint rule, a pattern documented) so it's a real prevention story, not just a fix
+ > story. **Fill this in with a specific PayPal incident before the round if you have one in mind** — a
+ > generic answer here is the one gap this page can't write for you.
+
+ **"How would you handle being the only iOS engineer, with no one to review your architecture calls
+ before they ship?"**
+
+ > "The habit that matters most there isn't 'get code review approval,' since there's no one to give it —
+ > it's writing decisions down clearly enough that someone unfamiliar with iOS, whether that's my KMP/Go
+ > teammates now or a future second iOS hire later, can follow the reasoning after the fact. I'd also
+ > lean harder on tests as the thing that catches what a second pair of eyes normally would, and treat
+ > any genuinely uncertain call as worth a short written note explaining the tradeoff, not just a
+ > decision made silently in my head."
+
+ **"Tell me about a time you had to explain something technical to someone without your background."**
+
+ > A good candidate: explaining the Wallet-native reasoning to Korey (non-engineer) in a way that landed
+ > without PassKit jargon — cite the actual conversation, and note what you deliberately left out (the
+ > Objective-C-cinterop nuance) for a non-technical audience versus what you'd include for a KMP-fluent
+ > engineer. This shows audience-calibration, a real and checkable skill.
+
+ **"Why Fanatics? Why this team specifically?"**
+
+ > Same core answer as Day 1, Part 3 — credit-card domain overlap from PayPal, the sole-iOS-owner shape
+ > as something you're seeking rather than tolerating, the Wallet insight as proof you already think this
+ > way. Don't recite it identically if you already gave this to Korey; compress it and let the interviewer
+ > ask a follow-up rather than performing the full pitch again.
 
  ---
 
- ## Part 4: Two other reported questions (different/lower-confidence role) — brief awareness only
+ ## Part 4: Questions to ask them — a different flavor from Day 1
 
- From a September 2025 SDE3 Full Stack (Hyderabad) report — different role, different location, lower
- relevance, but cheap to know exist:
+ Day 1's list was written for a recruiter screen (process/logistics-leaning). This round likely has a
+ hiring manager or future teammate — better questions probe **team dynamics and how decisions actually
+ get made**, not process:
 
- - **Angle Between Clock Hands** — compute the angle between hour/minute hands at a given time.
-   Formula-based: minute hand moves 6°/minute, hour hand moves 0.5°/minute (30°/hour +
-   0.5°-per-minute-within-the-hour); take `abs(difference)`, then `min(angle, 360 - angle)` for the
-   smaller angle.
- - **Mirror of a Palindrome String** — check whether a string, when each character is mapped to its
-   "mirror" (e.g. on a 7-segment/reflective alphabet subset like `A H I M O T U V W X Y`), reads the
-   same reversed. A string/set-membership problem, not algorithmically deep — the trick is just
-   correctly defining which characters have valid mirrors.
+ 1. **"How does the team currently resolve a disagreement between what's easiest to build in the shared
+    Kotlin module versus what's right for iOS specifically — is that a conversation, or does someone have
+    final say?"** — directly probes the "iOS voice in a cross-platform-default room" dynamic from Day 0,
+    Part 2.
+ 2. **"What does the review process look like for iOS-specific changes, given there's no other iOS
+    engineer today?"** — a fair, practical question that also signals you've already thought about the
+    sole-ownership tradeoff seriously.
+ 3. **"What's the biggest open technical risk for the Amex card launch from where you're sitting?"** —
+    gives you real signal on what you'd actually be walking into, and a hiring-manager-level question
+    a recruiter usually can't answer as concretely.
+ 4. **"How does the team decide what's worth building shared vs. native-only in practice — is there a
+    real example besides Wallet where that call was close?"** — tests whether your Wallet reasoning
+    (Part 3 above) matches how they actually think, and surfaces a second data point either way.
+ 5. **"What would make the first 90 days a clear success from your side, specifically — not the generic
+    version, the thing you'd actually be relieved to see land?"**
 
- Not worth deep prep given the low confidence they apply to an iOS-specific loop — noted here only so
- they're not a total surprise if raised.
+ If time is short, ask 1 and 3 — they carry the most unique signal for a hiring-manager-level
+ conversation and aren't things Korey could have answered as concretely.
+
+ ---
+
+ ## Part 5: How to close
+
+ > "This was really useful — I feel like I have a much clearer picture of how the team actually resolves
+ > the iOS-vs-shared question day to day, which was the thing I was most curious about coming in. I'm
+ > still very much interested, and glad to follow up on anything if it'd help on your end."
+
+ ---
+
+ ## Part 6: Pre-round checklist
+
+ - [ ] Fill in one real PayPal bug/mistake story (Part 3) — the one gap this page left open.
+ - [ ] Have the Wallet-pushback story ready close to verbatim — it's your strongest "disagreed and was
+       right" answer, and it's already proven to work since it's the exact thing that got Korey's
+       attention originally.
+ - [ ] Decide, in advance, how much of today's Round 1/Round 2 experience you're comfortable narrating if
+       asked directly — both are genuinely good "learned fast under pressure" material.
+ - [ ] Pick your Part 4 questions now, don't decide live — 1 and 3 first if time is short.
 
  [↑ Back to Top](#top)
 */

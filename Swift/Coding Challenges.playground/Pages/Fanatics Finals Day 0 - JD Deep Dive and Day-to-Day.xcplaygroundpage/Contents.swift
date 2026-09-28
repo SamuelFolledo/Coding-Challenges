@@ -6,24 +6,21 @@ import Foundation
  # Fanatics Prep — Day 0: JD Deep Dive, Day-to-Day Reality & Tailored Pitch
 
  Role: **Senior iOS Engineer — Credit Card**, Fanatics App team, New York, NY. Posted base range
- **$152,000–$200,000**. Per the recruiter call: this is a senior, sole-iOS-owner role on a team that
- otherwise works in **Kotlin Multiplatform (KMP) and Go** — you'd be the point of contact for
- everything iOS-native. The recruiter also said Fanatics is rolling out **a new interview format as
+ **$152,000–$200,000**. Recruiter is **Korey**. Per the call with him: this is a senior, sole-iOS-owner
+ role on a team that otherwise works in **Kotlin Multiplatform (KMP) and Go** — you'd be the point of
+ contact for everything iOS-native. Korey also said Fanatics is rolling out **a new interview format as
  of 2026-08-13**, so treat everything below sourced from public candidate reports as background
  texture, not a confirmed rubric — see the confidence tags in Part 7.
 
- ## TODO — confirm or correct before you rely on this
+ ## CONFIRMED 2026-08-27 — the real loop, superseding the guesses below
 
- 1. Recruiter's name isn't in my context yet — fill in once you have it, useful for Day 1's "who am I
-    talking to" framing.
- 2. The exact composition of the "iOS-style" round (system design? live coding? trivia? some mix?) is
-    a guess extrapolated from the JD's skill list (Part 2) — confirm with the recruiter if you get the
-    chance, since Days 4–5 are built around that guess.
- 3. Whether the Credit Card team's product is the Fanatics-branded credit card (a co-brand card
-    program, common in retail) or something else — Part 1 assumes the former since it's the only
-    public thing called "Fanatics Credit Card." Correct if the recruiter said otherwise.
- 4. Part 6's pitch assumes your PayPal team was specifically **PayPal's Credit Card mobile team** —
-    confirm the years/scope are stated the way you actually want them framed.
+ The actual interview loop, learned firsthand rather than inferred: **Round 1 (completed)** was an
+ iOS-specific bug hunt in a given starting codebase — some users weren't getting rewards; root cause was
+ using a type's `rawValue` as its identifier instead of a real `id` property. **Round 2** is a
+ **from-scratch build round where AI tools are explicitly allowed**, framed as mimicking real day-to-day
+ work — see Day 2, rebuilt around this. **Round 3** is behavioral. Days 2–3 and 9–10 below were written
+ against a guessed "LeetCode round + iOS round" structure before this was known — Day 2 is now corrected;
+ Days 3/9/10 still reflect the old guess and are lower-priority to fix given the real structure.
 
  ## Contents
  - Part 1: The role & team, concretely
@@ -33,19 +30,23 @@ import Foundation
  - Part 5: Comp — what's actually on the table
  - Part 6: A tailored 60-second pitch
  - Part 7: Curated high-likelihood question list (confidence-tagged)
- - Part 8: The week ahead — what Days 1–7 cover
+ - Part 8: The week ahead — what Days 1–10 cover
 
  ---
 
  ## Part 1: The role & team, concretely
 
  Fanatics App is the umbrella brand app — Free to Play games, live events, ecommerce, and new product
- experiences under one roof, explicitly "one team in everything." The **Credit Card** team sits inside
- that app, almost certainly owning the Fanatics-branded credit card program (co-brand retail credit
- cards — think application/eligibility flow, card management, statements, rewards tracking, and
- **Apple/Google Wallet provisioning** — are the standard feature set for this category; Chase, Barclays,
- or Comenity-style processors typically sit behind it as the actual card issuer, with Fanatics owning
- the app-side experience).
+ experiences under one roof, explicitly "one team in everything." The **Credit Card** team almost
+ certainly owns the **Fanatics American Express® Card** — confirmed publicly (CNBC, Amex/Fanatics press
+ releases, 2026-05-20): a co-brand card announced as part of a broader Amex/Fanatics partnership,
+ **issued by First Electronic Bank**, running on the **American Express network**, **managed by
+ Imprint** (a fintech that runs card programs for brands), launching later in 2026. Cardholders earn
+ **FanCash** — Fanatics' own rewards currency, redeemable for merchandise/tickets/collectibles — and
+ Amex is separately becoming a Fanatics Membership Rewards transfer partner. The standard feature set
+ for a co-brand card app follows from this: application/eligibility flow, card management, statements,
+ FanCash rewards tracking, and **Apple/Google Wallet provisioning** (Day 0, Part 4's Wallet story is
+ directly this feature, not a hypothetical).
 
  What makes this different from a typical "iOS engineer" req: you were told directly this is a team
  that otherwise builds in **Kotlin Multiplatform and Go**, and you'd likely be **the only iOS
@@ -163,28 +164,40 @@ import Foundation
  early in the loop whether the Credit Card team shares business logic only, or UI too, since that
  changes how much of "your" screen code is actually shared.
 
- **The technical reason "Add to Apple Wallet" has to be native**, precisely (useful if this comes up,
- since you already raised it with the recruiter): Kotlin/Native's interop story is built for
- Objective-C, not Swift directly — a pure-Swift-only API has no Kotlin-callable surface without an
- Obj-C-compatible wrapper. `PassKit` (`PKPass`, `PKAddPassesViewController`, `PKAddPaymentPassViewModel`
- for provisioning a card into Wallet) is exactly this kind of framework: Swift/Obj-C only, tightly
- coupled to app entitlements and a native view-controller presentation flow. Even with a hypothetical
- Obj-C bridge, the actual *user interaction* — presenting Apple's native Wallet UI, requesting the
- `com.apple.developer.payment-pass-provisioning` entitlement, handling provisioning callbacks — is
- inherently iOS-platform code with no cross-platform equivalent. This is the cleanest possible example
- of the Part 2 argument: it's not that KMP is bad at this, it's that this class of deep OS integration
- is structurally native-only, which is exactly the value a dedicated iOS engineer adds to a KMP team.
+ **The precise, defensible reason "Add to Apple Wallet" belongs entirely in the iOS app, correctly
+ stated** (worth getting exactly right — a KMP-savvy interviewer could push back on an imprecise
+ version of this claim, since `PassKit` predates Swift and has Objective-C headers, so Kotlin/Native's
+ cinterop *can* technically reach it). The stronger argument isn't "Kotlin literally can't call this" —
+ it's that routing it through the shared module has **zero reuse value and real cost**: (1) Android has
+ no equivalent — Google Wallet is a completely different SDK with a different integration model, so
+ there's no shared business logic to hoist into `commonMain`; a `WalletProvisioning` `expect` would have
+ exactly one real `actual` and a stub on the other platform, which isn't what shared code is for. (2)
+ It's tightly coupled to native UI presentation (`PKAddPaymentPassViewController`) and app-target
+ entitlements, which live in the iOS app target regardless of which language wrote them. (3) Writing it
+ in Swift gets full modern-language ergonomics (`async`/`await`, SwiftUI's `UIViewControllerRepresentable`
+ wrapping) instead of routing through Kotlin/Native's cinterop for no benefit. **The sharper, truly
+ "technically impossible" example**, if you want one in reserve: **SwiftUI itself** is unreachable from
+ Kotlin/Native — its `View` protocol depends on associated types, opaque types (`some View`), property
+ wrappers, and result builders, none of which have an Objective-C bridge, unlike the older Obj-C-based
+ frameworks (PassKit, UIKit, Foundation). So the fully accurate framing: cross-platform reach is a
+ spectrum — Obj-C-era frameworks are technically reachable from Kotlin but rarely worth routing through
+ shared code, while modern Swift-only APIs (SwiftUI chief among them) are genuinely, technically
+ native-only.
 
- A minimal sketch of the shape this takes in code — the `expect`/`actual` boundary, applied to Wallet:
+ A minimal sketch of the shape this takes in code. Note: a real KMP `actual` implementation is written
+ in *Kotlin* (in the `iosMain` source set), not Swift — Day 8 covers that precisely. What's sketched
+ here is the more likely real architecture per the argument above: Wallet provisioning skips the shared
+ module's `expect`/`actual` mechanism entirely and lives as an ordinary Swift protocol/type wholly
+ inside the iOS app target, since there's no `commonMain` logic worth sharing for it:
 */
 
-// Shared Kotlin module declares (conceptually — this is the Swift-side mirror of the contract):
 protocol WalletProvisioning {
     func canAddCardToWallet() -> Bool
     func presentAddToWallet(cardholderName: String, primaryAccountSuffix: String) async throws
 }
 
-// The iOS `actual` — the only place PassKit is ever imported in the whole codebase.
+// Lives entirely in the iOS app target — never touches the shared KMP module at all, since Android's
+// Wallet equivalent (Google Wallet) is a different enough SDK that there's no real logic to share.
 final class PassKitWalletProvisioning: WalletProvisioning {
     func canAddCardToWallet() -> Bool {
         // In reality: PKAddPaymentPassViewModel.canAddPaymentPass()
@@ -199,9 +212,11 @@ final class PassKitWalletProvisioning: WalletProvisioning {
 }
 
 /*:
- **What to say if this comes up live:** "The shared module would declare a provisioning interface as an
- `expect`, and the iOS `actual` is the only place `PassKit` ever gets imported — that keeps the
- native-only surface area small and explicit instead of leaking platform checks throughout shared code."
+ **What to say if this comes up live:** "I'd actually keep Wallet provisioning entirely inside the iOS
+ app target, not behind an `expect`/`actual` boundary at all — there's no real logic to share with
+ Android's Google Wallet integration, so routing it through the shared module would just add interop
+ ceremony for zero reuse benefit. `expect`/`actual` earns its keep when the *behavior* is conceptually
+ shared and only the *implementation* differs per platform — Wallet isn't that."
 
  ---
 
@@ -224,21 +239,41 @@ final class PassKitWalletProvisioning: WalletProvisioning {
 
  ## Part 6: A tailored 60-second pitch
 
- > "I'm an iOS engineer with 6 years building customer-facing mobile features, most recently at PayPal
- > on the Credit Card mobile team, where I built payment flows end to end — including the
- > Make-A-Payment experience and its underlying navigation logic. What draws me to this role
- > specifically is the shape of it: you're looking for someone to be the iOS point of contact on a team
- > that's built primarily in Kotlin Multiplatform and Go, and that's exactly the kind of ownership I
- > want next — not just writing iOS features, but being the platform authority who knows where native
- > Swift has to take over from shared logic. I actually flagged that instinct to your recruiter before
- > we'd even talked tech in depth — Add to Apple Wallet has to be native, since PassKit has no
- > cross-platform surface — and that's the kind of judgment I'd bring day to day here: knowing when
- > shared code is the right call and when it isn't. Add in that it's a credit-card product, which is
- > directly the domain I already work in, and this is a very specific, not generic, reason to want this
- > team."
+ **Confirmed PayPal specifics (2026-08-20):** one year on **PayPal's Credit Card mobile team**, working
+ across app flows spanning **all of PayPal's credit card products** (not one narrow flow — the whole
+ product surface). Spent the first few months on the existing **UIKit** app, then helped **rewrite the
+ entire app from UIKit to SwiftUI**, alongside the rest of a **~24–30 person team**. This is a
+ genuinely strong, specific asset for this loop — a full-app UIKit→SwiftUI migration at that scale is
+ exactly the kind of "modern Swift" experience the JD calls out, and it's a natural bridge to a KMP
+ migration/adoption story: both are "the whole team moves the app to a new architecture together"
+ problems, just with a different target.
 
- Adjust years/specifics to taste, but keep the throughline: **credit-card-domain match → sole-iOS-owner
- ownership as a feature, not a gap → the Apple Wallet insight as proof you already think this way.**
+ > "I'm an iOS engineer with 6 years building customer-facing mobile features. Most recently, I spent a
+ > year on PayPal's Credit Card mobile team, working across flows spanning all of PayPal's credit card
+ > products — including Make-A-Payment and its navigation logic. I joined on the existing UIKit app,
+ > then helped rewrite the entire thing to SwiftUI alongside the rest of a 24-to-30-person team, so I've
+ > lived through a full-app architecture migration at scale, not just a greenfield SwiftUI project. What
+ > draws me to this role specifically is the shape of it: you're looking for someone to be the iOS point
+ > of contact on a team that's built primarily in Kotlin Multiplatform and Go, and that's exactly the
+ > kind of ownership I want next — not just writing iOS features, but being the platform authority who
+ > knows where native Swift has to take over from shared logic. I actually flagged that instinct to
+ > Korey before we'd even talked tech in depth — Add to Apple Wallet has to be native, since PassKit has
+ > no cross-platform surface — and that's the kind of judgment I'd bring day to day here. Add in that
+ > it's a credit-card product, directly the domain I already work in, and this is a very specific, not
+ > generic, reason to want this team."
+
+ Adjust specifics to taste, but keep the throughline: **credit-card-domain match → a real large-scale
+ migration story (UIKit→SwiftUI) as proof you can operate through team-wide architecture change →
+ sole-iOS-owner ownership as a feature, not a gap → the Apple Wallet insight as proof you already think
+ this way.**
+
+ **If asked "tell me about a complex technical project" specifically** (a near-certain question in the
+ iOS round or foundation call), the UIKit→SwiftUI rewrite is likely your strongest answer, stronger than
+ Make-A-Payment alone — it's team-scale, architecture-level, and directly on-stack for this JD. Worth
+ having ready: what made the migration hard (state management differences, navigation paradigm changes,
+ how you sequenced which screens moved first, how 24–30 engineers avoided stepping on each other), and
+ what you'd tell Fanatics if they ever needed to fold the KMP shared module into more of the UI layer —
+ you'd recognize the shape of that problem from having lived through an analogous one.
 
  ---
 
@@ -270,12 +305,12 @@ final class PassKitWalletProvisioning: WalletProvisioning {
 
  ---
 
- ## Part 8: The week ahead — what Days 1–7 cover
+ ## Part 8: The week ahead — what Days 1–10 cover
 
  ```
  Day  | Focus
  -----+---------------------------------------------------------------------------
- 1    | The 30-min foundation call — what it likely covers, questions to ask back
+ 1    | The 30-min foundation call — full guide: opening, 10 Q&As w/ follow-ups, closing
  2    | Coding round Pt 1 — arrays/strings/hashmaps (calibrated to "not medium/hard")
  3    | Coding round Pt 2 — graphs/BFS (word-ladder-style) + trees, senior-level extensions
  4    | iOS-style round Pt 1 — Swift/SwiftUI/UIKit, MVVM/coordinators/routers/Combine,
@@ -285,6 +320,10 @@ final class PassKitWalletProvisioning: WalletProvisioning {
  6    | CI/CD & engineering practice — Fastlane, GitHub Actions, SPM, Xcodegen, on-call,
       | code review & mentoring as the sole iOS owner
  7    | Questions to ask, comp/leveling framing, final countdown checklist
+ 8    | KMP deep dive for an iOS-only engineer — real code shape, ticket workflow, pros/
+      | cons/limitations
+ 9    | Full guide for the LeetCode-style round — opening, 10 Q&As w/ follow-ups, closing
+ 10   | Full guide for the iOS-style round — opening, 10 Q&As w/ follow-ups, closing
  ```
 
  [↑ Back to Top](#top)

@@ -9,5 +9,20 @@
         <page name='Struct vs Class'/>
         <page name='Strings+Tips'/>
         <page name='Big O Bench Timer'/>
+        <page name='Fanatics Finals Day 0 - JD Deep Dive and Day-to-Day'/>
+        <page name='Fanatics Finals Day 1 - Foundation Call Prep'/>
+        <page name='Fanatics Finals Day 2 - Coding Round Pt1'/>
+        <page name='Fanatics Finals Day 3 - Coding Round Pt2'/>
+        <page name='Robinhood Finals Day 0 - JD Deep Dive and Pitch'/>
+        <page name='Robinhood Finals Day 1 - Recruiter Prep'/>
+        <page name='Robinhood Finals Day 2 - Coding Round Pt1'/>
+        <page name='Robinhood Finals Day 3 - Coding Round Pt2'/>
+        <page name='Robinhood Finals Day 4 - Project Call Practice'/>
+        <page name='Robinhood Finals Day 5 - Foundation Call'/>
+        <page name='Robinhood Finals Day 6 - Questions and Follow Ups'/>
+        <page name='Robinhood Finals Day 7 - Final Review'/>
+        <page name='Robinhood Finals Day 8 - VIPER RxSwift and Fintech Patterns'/>
+        <page name='Robinhood Finals Day 9 - Linked Lists Trees and DSA Review'/>
+        <page name='Robinhood Finals Day 10 - Team Matching (T-Mapping) Guide'/>
     </pages>
 </playground>
